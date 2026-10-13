@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a16">
+  <meta name="description" content="Nhập vai tại chiến trường Điện Biên Phủ: vượt 5 chốt kiến thức của VNR202 để đi đến chiến thắng.">
+  <title>Chiến trường Điện Biên Phủ — VNR202</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="battle.css">
+  <script defer src="battle.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#game-panel">Đến phần câu hỏi</a>
+  <header class="battle-header">
+    <a class="back-link" href="index.html#dien-bien"><span aria-hidden="true">←</span> VỀ HÀNH TRÌNH</a>
+    <div class="battle-brand"><span>★</span> VNR202 <b>/</b> ĐIỆN BIÊN PHỦ</div>
+    <button id="sound-toggle" type="button" aria-pressed="false" aria-label="Bật âm thanh hiệu ứng">♪ ÂM THANH: TẮT</button>
+  </header>
+  <main class="battle-main">
+    <div class="battle-topline"><div><span class="eyebrow">CHẾ ĐỘ NHẬP VAI / 1954</span><h1>CHIẾN TRƯỜNG <em>ĐIỆN BIÊN PHỦ</em></h1></div><div class="hud-status"><span id="role-label">CHƯA CHỌN VAI</span><strong id="stage-label">SẴN SÀNG XUẤT PHÁT</strong></div></div>
+    <section class="scene" id="scene" aria-label="Chiến trường Điện Biên Phủ minh họa">
+      <div class="scene-bg"></div><div class="scene-vignette"></div><div class="fog fog-one"></div><div class="fog fog-two"></div>
+      <div class="hazard-wash" id="hazard-wash"></div><div class="effects" id="effects" aria-hidden="true"></div>
+      <div class="horizon-copy"><span>THUNG LŨNG MƯỜNG THANH</span><strong>1954</strong></div>
+      <div class="threat-indicator" id="threat-indicator"><span class="threat-dot"></span><span>CHỜ LỆNH XUẤT PHÁT</span></div>
+      <div class="flag-mast" id="flag-mast" aria-hidden="true"><div class="flag-pole"></div><div class="victory-flag"><span>★</span></div></div>
+      <div class="runner" id="runner" aria-hidden="true">
+        <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" role="presentation"><ellipse cx="50" cy="124" rx="31" ry="5" fill="#0008"/><path d="M30 55 16 73l8 8 22-17M67 56l20 14-5 9-23-10" fill="#34402a" stroke="#19231c" stroke-width="4"/><path d="M37 88 31 118h17l9-27M59 88l11 30h16L72 82" fill="#263328" stroke="#171d18" stroke-width="4"/><path d="M30 56q19-11 41 0l6 36H29z" fill="#4e5c39" stroke="#202a22" stroke-width="4"/><path d="M28 58 17 79l11 5 13-22M70 58l15 20-8 8-21-20" fill="#556343" stroke="#202a22" stroke-width="3"/><rect x="36" y="66" width="26" height="20" rx="3" fill="#69734c" stroke="#293526" stroke-width="3"/><circle cx="50" cy="38" r="17" fill="#bd946c" stroke="#4e3b2b" stroke-width="3"/><path d="M29 33q4-30 21-30 21 0 23 30z" fill="#435338" stroke="#1c2b20" stroke-width="4"/><path d="M25 33h51" stroke="#263726" stroke-width="5" stroke-linecap="round"/><circle cx="44" cy="40" r="2" fill="#35251f"/><circle cx="57" cy="40" r="2" fill="#35251f"/><path d="M44 49q7 4 13 0" stroke="#744f3b" stroke-width="2" fill="none"/><path d="M70 75 96 71" stroke="#1d211b" stroke-width="5" stroke-linecap="round"/><path d="M74 71h13" stroke="#6a6149" stroke-width="3"/></svg>
+        <span id="runner-name">CHIẾN SĨ</span>
+      </div>
+      <div class="field-progress" id="field-progress" aria-label="Tiến trình chiến dịch"></div>
+      <div class="scene-bottom"><span>HỒ SƠ CHIẾN DỊCH / VNR202</span><span>5 CHỐT KIẾN THỨC → 1 LÁ CỜ CHIẾN THẮNG</span></div>
+      <div class="outcome" id="outcome" hidden></div>
+    </section>
+    <section class="game-panel" id="game-panel" aria-live="polite"></section>
+    <div class="source-note"><span>NGUỒN KIẾN THỨC: GIÁO TRÌNH VNR202 UPDATED SP24, BUỔI 13–14.</span><span>Trò chơi mô phỏng để ôn tập lịch sử; cảnh chiến trường là minh họa nghệ thuật.</span></div>
+  </main>
+</body>
+</html>
