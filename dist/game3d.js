@@ -3,7 +3,7 @@ import * as THREE from './vendor/three/three.module.js';
 const $ = (selector) => document.querySelector(selector);
 const worldEl = $('#world');
 const backgroundMusic = $('#background-music');
-backgroundMusic.volume = .25;
+backgroundMusic.volume = .2;
 const hud = {
   hp: $('#hp-text'), health: $('#health-fill'), armor: $('#armor-fill'), ammo: $('#ammo-text'), reserve: $('#reserve-text'),
   weapon: $('#weapon-name'), inventory: $('#inventory-icons'), objective: $('#objective-text'), objectiveFill: $('#objective-fill'),
@@ -33,7 +33,8 @@ const clock = new THREE.Clock();
 let renderer, scene, camera, player, playerParts, bunker, flagGroup, flagMesh;
 let role = null, status = 'intro', hp = 100, maxHp = 100, armor = 0, speed = 8, ammo = 12, reserve = 12;
 let rifle = false, grenades = 0, opened = 0, kills = 0, yaw = 0, pitch = .12, lastShot = 0, reloadUntil = 0;
-let nearest = null, activeQuestion = -1, quizDeadline = 0, soundEnabled = false, audioContext = null, toastTimer = 0;
+let nearest = null, activeQuestion = -1, quizDeadline = 0, soundEnabled = false, audioContext = null, ambientGain = null, toastTimer = 0;
+let nextBattleSoundAt = Infinity, shotFlashTimer = 0;
 let enemies = [], crates = [], enemyBullets = [], effects = [], obstacles = [], shrubs = [];
 let lastTime = 0, hudTime = 0, miniTime = 0, motion = 0, touchMove = { x: 0, y: 0 }, touchLookId = null;
 let activeBomb = null, nextBombAt = Infinity;
@@ -72,7 +73,7 @@ function initRenderer() {
   makeWorld();
   renderer.setAnimationLoop(tick);
   addEventListener('resize', resize);
-  document.addEventListener('visibilitychange', () => { lastTime = 0; });
+  document.addEventListener('visibilitychange', () => { lastTime = 0;if(document.hidden)audioContext?.suspend();else if(soundEnabled)audioContext?.resume(); });
   return true;
 }
 function resize() { if (!renderer) return; camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(devicePixelRatio || 1, innerWidth < 800 ? 1 : 1.25)); renderer.setSize(innerWidth, innerHeight); }
@@ -178,6 +179,7 @@ function startGame() {
   if(!role)return;
   const info=roles[role];maxHp=info.maxHp;hp=maxHp;speed=info.speed;status='running';player.visible=true;hud.intro.hidden=true;nextBombAt=performance.now()+15000;
   updateObjective();updateHud();showToast('WASD để di chuyển • bấm vào chiến trường để ngắm và bắn');
+  setBattleSound(true);
 }
 function updateObjective() {
   hud.objectiveFill.style.width=`${kills/enemies.length*100}%`;
@@ -196,6 +198,41 @@ function updateHud() {
 }
 function showToast(text) { hud.toast.textContent=text;hud.toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>hud.toast.classList.remove('show'),2800); }
 function audio(freq=320,duration=.12,type='sine',volume=.06){if(!soundEnabled)return;try{audioContext ||= new(window.AudioContext||window.webkitAudioContext)();const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(volume,audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);osc.connect(gain).connect(audioContext.destination);osc.start();osc.stop(audioContext.currentTime+duration)}catch{}}
+function setBattleSound(enabled){
+  const button=$('#sound-btn');soundEnabled=enabled;
+  button.setAttribute('aria-pressed',String(enabled));
+  button.innerHTML=enabled?'◖)) <span>TẮT ÂM THANH</span>':'◖)) <span>BẬT ÂM THANH</span>';
+  if(!enabled){backgroundMusic.pause();if(ambientGain&&audioContext)ambientGain.gain.setTargetAtTime(0,audioContext.currentTime,.12);return}
+  try{
+    backgroundMusic.play().catch(()=>showToast('Không thể tải nhạc nền từ website tham chiếu.'));
+    audioContext ||= new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();
+    if(!ambientGain){
+      const buffer=audioContext.createBuffer(1,audioContext.sampleRate*2,audioContext.sampleRate),data=buffer.getChannelData(0);
+      let low=0;for(let i=0;i<data.length;i++){low=(low+(Math.random()*2-1)*.05)*.985;data[i]=low}
+      const source=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter();ambientGain=audioContext.createGain();
+      source.buffer=buffer;source.loop=true;filter.type='lowpass';filter.frequency.value=420;ambientGain.gain.value=0;
+      source.connect(filter).connect(ambientGain).connect(audioContext.destination);source.start();
+    }
+    ambientGain.gain.setTargetAtTime((status==='running'||status==='quiz')?.28:0,audioContext.currentTime,.25);
+    nextBattleSoundAt=performance.now()+2500;
+  }catch{soundEnabled=false;button.setAttribute('aria-pressed','false');button.innerHTML='◖)) <span>ÂM THANH KHÔNG KHẢ DỤNG</span>'}
+}
+function noiseBlast(duration,volume,cutoff){
+  if(!soundEnabled||!audioContext)return;
+  const n=Math.ceil(audioContext.sampleRate*duration),buffer=audioContext.createBuffer(1,n,audioContext.sampleRate),data=buffer.getChannelData(0);
+  for(let i=0;i<n;i++)data[i]=(Math.random()*2-1)*(1-i/n);
+  const source=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain(),now=audioContext.currentTime;
+  source.buffer=buffer;filter.type='lowpass';filter.frequency.value=cutoff;
+  gain.gain.setValueAtTime(.001,now);gain.gain.exponentialRampToValueAtTime(volume,now+.007);gain.gain.exponentialRampToValueAtTime(.001,now+duration);
+  source.connect(filter).connect(gain).connect(audioContext.destination);source.start(now);source.stop(now+duration);
+}
+function battleSound(kind){
+  if(!soundEnabled||!audioContext)return;
+  if(kind==='shot'){noiseBlast(.18,.2,2200);audio(90,.2,'sawtooth',.12)}
+  else if(kind==='enemy'){noiseBlast(.13,.055,1300);audio(115,.12,'sawtooth',.035)}
+  else if(kind==='bomb'){noiseBlast(.8,.25,450);audio(65,.7,'sawtooth',.14)}
+  else{noiseBlast(.55,.045,300);audio(78,.42,'sawtooth',.025)}
+}
 
 function interact() {
   if(status!=='running')return;
@@ -216,11 +253,11 @@ function answer(index) {
   showToast(`CHÍNH XÁC! +16 ĐẠN, +30 THỂ LỰC • ${q.source}`);audio(760,.22,'triangle');
 }
 function takeDamage(value){if(status!=='running'&&status!=='quiz')return;const blocked=Math.min(armor,value*.7);armor=Math.max(0,armor-blocked);hp-=value-blocked;hud.damage.classList.add('active');setTimeout(()=>hud.damage.classList.remove('active'),190);audio(145,.15,'sawtooth',.07);updateHud();if(hp<=0)die('Trúng hỏa lực đối phương. Hãy tìm chỗ tránh và xử lý tiếp tế nhanh hơn.');}
-function die(reason){if(status==='dead'||status==='victory')return;status='dead';hud.quiz.hidden=true;hud.prompt.hidden=true;clearBomb();if(document.pointerLockElement)document.exitPointerLock();
+function die(reason){if(status==='dead'||status==='victory')return;status='dead';hud.quiz.hidden=true;hud.prompt.hidden=true;clearBomb();if(ambientGain)ambientGain.gain.setTargetAtTime(0,audioContext.currentTime,.35);if(document.pointerLockElement)document.exitPointerLock();
   hud.outcome.hidden=false;hud.outcomeCard.innerHTML=`<span class="outcome-kicker">HÀNH TRÌNH DỪNG LẠI / ĐÃ HẠ ${kills} ĐỐI PHƯƠNG</span><h2>BẠN ĐÃ HY SINH<br><em>THẬT ANH DŨNG</em></h2><p>${reason}</p><p>Hòm tiếp tế kiến thức giúp bạn có thêm đạn và thể lực cho lần xuất phát tiếp theo.</p><div class="outcome-actions"><button type="button" class="primary" id="retry-btn">THỬ LẠI ↻</button><a href="learn.html">VỀ GIÁO TRÌNH</a></div><small>Trò chơi mô phỏng, không tái hiện chính xác diễn biến chiến đấu.</small>`;
   $('#retry-btn').onclick=()=>location.reload();updateObjective();updateHud();audio(95,.5,'sawtooth',.1);
 }
-function victory(){if(status!=='running')return;status='victory';flagGroup.visible=true;hud.prompt.hidden=true;clearBomb();if(document.pointerLockElement)document.exitPointerLock();
+function victory(){if(status!=='running')return;status='victory';flagGroup.visible=true;hud.prompt.hidden=true;clearBomb();if(ambientGain)ambientGain.gain.setTargetAtTime(0,audioContext.currentTime,.35);if(document.pointerLockElement)document.exitPointerLock();
   hud.outcome.hidden=false;hud.outcomeCard.innerHTML=`<span class="outcome-kicker">07 / 05 / 1954 — ĐIỆN BIÊN PHỦ</span><h2>CHÚC MỪNG<br><em>CHIẾN THẮNG!</em></h2><p>Bạn đã hạ toàn bộ ${enemies.length} đối phương. Lá cờ đỏ sao vàng tung bay trên hầm chỉ huy! Hòm tiếp tế là lựa chọn để bổ sung đạn và hồi máu.</p><div class="outcome-actions"><button type="button" class="primary" id="retry-btn">CHƠI LẠI ↻</button><a href="learn.html">ÔN TẬP VNR202</a></div><small>Kiến thức: giáo trình VNR202, buổi 13–14 • Thế giới 3D là minh họa.</small>`;
   $('#retry-btn').onclick=()=>location.reload();updateObjective();updateHud();try{localStorage.setItem('vnr202-3d-victory','1')}catch{}
   for(let i=0;i<4;i++)setTimeout(()=>burst(new THREE.Vector3((rand()-.5)*18,10+rand()*9,-44)),i*400);
@@ -229,8 +266,12 @@ function victory(){if(status!=='running')return;status='victory';flagGroup.visib
 
 function reload(){if(status!=='running'||reloadUntil>performance.now()||ammo>=(rifle?24:12)||reserve===0)return;reloadUntil=performance.now()+1250;showToast('ĐANG NẠP ĐẠN...');setTimeout(()=>{if(status==='dead')return;const capacity=rifle?24:12,amount=Math.min(capacity-ammo,reserve);ammo+=amount;reserve-=amount;updateHud();audio(420,.08,'square')},1250)}
 function killEnemy(enemy){if(!enemy.alive)return;enemy.alive=false;scene.remove(enemy.body);kills++;updateObjective();updateHud();if(kills===enemies.length)victory();else showToast(`ĐÃ HẠ ĐỐI PHƯƠNG • CÒN ${enemies.length-kills}`)}
-function fire(){if(status!=='running'||performance.now()-lastShot<(rifle?230:430)||reloadUntil>performance.now())return;if(ammo<=0){showToast('HẾT ĐẠN — BẤM R ĐỂ NẠP');audio(170,.06,'square');return}lastShot=performance.now();ammo--;updateHud();audio(155,.11,'sawtooth',.08);
-  const start=player.position.clone().add(new THREE.Vector3(0,1.6,0));const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);
+function fire(){if(status!=='running'||performance.now()-lastShot<(rifle?230:430)||reloadUntil>performance.now())return;if(ammo<=0){showToast('HẾT ĐẠN — BẤM R ĐỂ NẠP');audio(170,.06,'square');return}lastShot=performance.now();ammo--;updateHud();battleSound('shot');
+  const start=new THREE.Vector3(.2,1.63,-1.08).applyAxisAngle(new THREE.Vector3(0,1,0),yaw).add(player.position);
+  const flash=mesh(new THREE.SphereGeometry(.3,8,6),new THREE.MeshBasicMaterial({color:0xffda73,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false}),start.x,start.y,start.z);
+  flash.scale.set(1.5,.85,1.5);effects.push({mesh:flash,ttl:.09});burst(start,4,0xffce64);
+  const screenFlash=$('#shot-flash');screenFlash.classList.add('active');clearTimeout(shotFlashTimer);shotFlashTimer=setTimeout(()=>screenFlash.classList.remove('active'),75);
+  const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);
   let hit=null,best=Infinity;
   for(const e of enemies){if(!e.alive)continue;const target=e.body.position.clone().add(new THREE.Vector3(0,1.5,0));const to=target.clone().sub(ray.ray.origin),along=to.dot(ray.ray.direction),near=ray.ray.origin.clone().addScaledVector(ray.ray.direction,along).distanceTo(target);if(along>0&&along<56&&near<1.15&&along<best){best=along;hit=e}}
   const end=hit?hit.body.position.clone().add(new THREE.Vector3(0,1.5,0)):ray.ray.origin.clone().addScaledVector(ray.ray.direction,45);
@@ -255,7 +296,7 @@ function updateBomb(time){
   bomb.disc.material.opacity=.22+Math.abs(Math.sin(time*.009))*.2;bomb.ring.scale.setScalar(1+Math.sin(time*.012)*.035);
   if(remaining>0)return;
   const distance=Math.hypot(player.position.x-bomb.x,player.position.z-bomb.z),blastPoint=new THREE.Vector3(bomb.x,terrainHeight(bomb.x,bomb.z)+.5,bomb.z);
-  clearBomb();burst(blastPoint,32,0xff873e);audio(75,.55,'sawtooth',.15);
+  clearBomb();burst(blastPoint,32,0xff873e);battleSound('bomb');
   if(distance<5.2)takeDamage(34);else showToast('ĐÃ NÉ ĐƯỢC BOM!');
   nextBombAt=time+17000+rand()*9000;
 }
@@ -276,7 +317,7 @@ function updateEnemies(dt,time){if(status!=='running'&&status!=='quiz')return;fo
   const pace=dist<18?1.15:.9;position.x=THREE.MathUtils.clamp(position.x+move.x*pace*dt,-21,21);position.z=THREE.MathUtils.clamp(position.z+move.z*pace*dt,-43,32);position.y=terrainHeight(position.x,position.z);
   e.walk+=dt*5.5;e.body.userData.legs[0].rotation.x=Math.sin(e.walk)*.24;e.body.userData.legs[1].rotation.x=-Math.sin(e.walk)*.24;
   e.body.rotation.y=dist<20?Math.atan2(player.position.x-position.x,position.z-player.position.z):Math.atan2(move.x,-move.z);
-  e.cooldown-=dt;if(e.cooldown<=0&&dist<16){e.cooldown=6+rand()*3;const from=position.clone().add(new THREE.Vector3(0,1.5,0)),to=player.position.clone().add(new THREE.Vector3(0,1.2,0)),direction=to.sub(from).normalize();const bullet=mesh(new THREE.SphereGeometry(.12,6,5),mats.bullet,from.x,from.y,from.z);enemyBullets.push({mesh:bullet,velocity:direction.multiplyScalar(17),ttl:2.2});audio(108,.09,'sawtooth',.025)}
+  e.cooldown-=dt;if(e.cooldown<=0&&dist<16){e.cooldown=6+rand()*3;const from=position.clone().add(new THREE.Vector3(0,1.5,0)),to=player.position.clone().add(new THREE.Vector3(0,1.2,0)),direction=to.sub(from).normalize();const bullet=mesh(new THREE.SphereGeometry(.12,6,5),mats.bullet,from.x,from.y,from.z);enemyBullets.push({mesh:bullet,velocity:direction.multiplyScalar(17),ttl:2.2});battleSound('enemy')}
  }}
 function updateBullets(dt){for(let i=enemyBullets.length-1;i>=0;i--){const b=enemyBullets[i];b.mesh.position.addScaledVector(b.velocity,dt);b.ttl-=dt;if(b.mesh.position.distanceTo(player.position.clone().add(new THREE.Vector3(0,1.3,0)))<.85){takeDamage(status==='quiz'?5:6);b.ttl=0}if(b.ttl<=0){scene.remove(b.mesh);b.mesh.geometry.dispose();enemyBullets.splice(i,1)}}}
 function updateEffects(dt,time){for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.ttl-=dt;if(e.velocity){e.mesh.position.addScaledVector(e.velocity,dt);e.velocity.y-=dt*13;e.mesh.scale.multiplyScalar(.97)}if(e.ttl<=0){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}for(const c of crates){if(c.opened)continue;c.marker.position.y=2.1+Math.sin(time*.002+c.index)*.17;c.marker.rotation.y+=dt*1.6;c.ring.rotation.z+=dt*.35}
@@ -289,6 +330,7 @@ function drawMap(){const canvas=$('#minimap'),ctx=canvas.getContext('2d'),w=canv
   const p=project(player.position.x,player.position.z);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(yaw);ctx.fillStyle='#ffdf7c';ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(-4,5);ctx.lineTo(4,5);ctx.closePath();ctx.fill();ctx.restore()}
 function tick(time){if(!renderer||document.hidden)return;const dt=Math.min(.045,lastTime?(time-lastTime)/1000:.016);lastTime=time;
   if(status==='running')updatePlayer(dt);updateCamera(dt);updateEnemies(dt,time);updateBullets(dt);updateBomb(time);updateEffects(dt,time);
+  if(soundEnabled&&(status==='running'||status==='quiz')&&time>=nextBattleSoundAt){battleSound('distant');nextBattleSoundAt=time+5000+rand()*7000}
   if(status==='quiz'){const remaining=Math.max(0,Math.ceil((quizDeadline-performance.now())/1000));hud.quizTimer.textContent=`${remaining}s`;if(remaining<=0)die('Hết thời gian giải mã tiếp tế. Hỏa lực đối phương đã áp sát.')}
   if(time-hudTime>100){updateProximity();hudTime=time}if(time-miniTime>180){drawMap();miniTime=time}
   renderer.render(scene,camera);
@@ -296,15 +338,7 @@ function tick(time){if(!renderer||document.hidden)return;const dt=Math.min(.045,
 
 function bindControls(){document.querySelectorAll('[data-role]').forEach(button=>button.addEventListener('click',()=>setRole(button.dataset.role)));$('#start-btn').addEventListener('click',startGame);
   hud.quizOptions.addEventListener('click',event=>{const answerButton=event.target.closest('[data-answer]');if(answerButton)answer(Number(answerButton.dataset.answer))});
-  $('#sound-btn').addEventListener('click',event=>{
-    soundEnabled=!soundEnabled;
-    event.currentTarget.setAttribute('aria-pressed',String(soundEnabled));
-    event.currentTarget.innerHTML=soundEnabled?'♫ <span>TẮT NHẠC</span>':'♪ <span>BẬT NHẠC</span>';
-    if(soundEnabled){
-      backgroundMusic.play().catch(()=>showToast('Không thể tải nhạc nền từ website tham chiếu.'));
-      audio(660,.15,'triangle');
-    }else backgroundMusic.pause();
-  });
+  $('#sound-btn').addEventListener('click',()=>setBattleSound(!soundEnabled));
   addEventListener('keydown',event=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();keys.add(event.code);if(event.repeat)return;if(status==='quiz'&&['Digit1','Digit2','Digit3','Digit4'].includes(event.code)){answer(Number(event.code.slice(-1))-1);return}if(event.code==='KeyE')interact();if(event.code==='KeyR')reload();if(event.code==='Space')fire()});addEventListener('keyup',event=>keys.delete(event.code));
   worldEl.addEventListener('click',()=>{if(status!=='running')return;if(document.pointerLockElement===renderer.domElement)fire();else renderer.domElement.requestPointerLock?.()});
   document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement||status!=='running')return;yaw-=event.movementX*.0026;pitch=THREE.MathUtils.clamp(pitch-event.movementY*.0018,-.2,.46)});

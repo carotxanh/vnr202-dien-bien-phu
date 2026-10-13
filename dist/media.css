@@ -20,6 +20,8 @@
 .page-music-toggle{position:fixed;z-index:80;right:22px;bottom:22px;border:2px solid #f7d37b;border-radius:999px;background:#e4bd63;color:#1b241a;padding:10px 16px;font-size:11px;font-weight:800;letter-spacing:.05em;box-shadow:0 7px 25px #0009}
 .page-music-toggle:hover{background:#f8d988}.page-music-toggle[aria-pressed="true"]{background:#20352a;color:#f6d47d}
 .brand-flag{display:block;width:46px;height:31px;object-fit:cover;flex:none;box-shadow:0 0 0 1px #f2dc9a,0 4px 12px #0007}
+.brand-name{display:block;white-space:nowrap}
+.hero h1{line-height:1.23}
 @media(max-width:1000px){.video-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.video-card:last-child{grid-column:1/-1;width:min(100%,560px);justify-self:center}}
 @media(max-width:700px){.video-grid{grid-template-columns:1fr}.video-card,.video-card:last-child{grid-column:auto;width:100%;min-height:250px}.video-section .section-index{margin-bottom:35px}.video-intro{margin-bottom:28px}.page-music-toggle{right:12px;bottom:12px;font-size:10px;padding:9px 12px}}
 @media(prefers-reduced-motion:reduce){.video-card,.video-card img{transition:none}}
