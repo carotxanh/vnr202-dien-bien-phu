@@ -8,19 +8,22 @@
   <title>VNR202 — Hành trình lịch sử</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://vnr202.vercel.app">
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="app.js"></script>
+  <link rel="stylesheet" href="styles.css?v=media-1">
+  <link rel="stylesheet" href="media.css?v=media-1">
+  <script defer src="app.js?v=media-1"></script>
 </head>
 <body>
+  <audio id="page-background-music" src="https://vnr202.vercel.app/Victory%20at%20Dien%20Bien%20Phu.mp3" preload="none" loop></audio>
   <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
   <header class="site-header">
-    <a class="brand" href="#top" aria-label="VNR202, về đầu trang"><span class="brand-mark">V<span>★</span></span><span>VNR<span class="gold">202</span><small>HÀNH TRÌNH LỊCH SỬ</small></span></a>
-    <nav aria-label="Điều hướng chính"><a href="#hanh-trinh">Hành trình</a><a href="#chien-dich">Trò chơi</a><a href="#tai-lieu">Giáo trình</a></nav>
+    <a class="brand" href="#top" aria-label="VNR202, về đầu trang"><img class="brand-flag" src="assets/vietnam-flag.svg" alt=""><span>VNR<span class="gold">202</span><small>HÀNH TRÌNH LỊCH SỬ</small></span></a>
+    <nav aria-label="Điều hướng chính"><a href="#hanh-trinh">Hành trình</a><a href="#chien-dich">Trò chơi</a><a href="#tai-lieu">Giáo trình</a><a href="#video">Video</a></nav>
     <a class="header-cta" href="#chien-dich">Bắt đầu khám phá <span aria-hidden="true">↗</span></a>
     <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-nav">☰</button>
   </header>
-  <nav id="mobile-nav" class="mobile-nav" aria-label="Điều hướng trên điện thoại" hidden><a href="#hanh-trinh">Hành trình</a><a href="#chien-dich">Trò chơi</a><a href="#tai-lieu">Giáo trình</a></nav>
+  <nav id="mobile-nav" class="mobile-nav" aria-label="Điều hướng trên điện thoại" hidden><a href="#hanh-trinh">Hành trình</a><a href="#chien-dich">Trò chơi</a><a href="#tai-lieu">Giáo trình</a><a href="#video">Video</a></nav>
 
   <main id="main">
     <section class="hero" id="top" aria-labelledby="hero-title">
@@ -62,8 +65,15 @@
     </section>
 
     <section class="sources section-pad" id="tai-lieu" aria-labelledby="sources-title"><div class="shell sources-grid"><div><div class="section-index">04 / NGUỒN TÀI LIỆU</div><p class="kicker">HỌC CÓ CĂN CỨ</p><h2 id="sources-title">BÁM SÁT <span>GIÁO TRÌNH.</span></h2><p>Nội dung và đáp án được biên soạn từ bộ bài giảng VNR202 cập nhật SP24 gồm 29 session do bạn cung cấp. Số buổi học được ghi ở từng chặng và sau câu trả lời để bạn mở lại slide gốc đối chiếu.</p></div><div class="source-card"><span>VNR202 / UPDATED SP24</span><strong>29 BUỔI HỌC</strong><div class="source-row"><b>01—02</b><span>Nhập môn và phương pháp học tập</span></div><div class="source-row"><b>03—10</b><span>Ra đời của Đảng và cách mạng 1930–1945</span></div><div class="source-row"><b>11—18</b><span>Kháng chiến và thống nhất 1945–1975</span></div><div class="source-row"><b>19—29</b><span>Xây dựng đất nước và Đổi mới</span></div><small>Lưu ý: Trò chơi là bản ôn tập, không thay thế toàn bộ nội dung bài giảng.</small></div></div></section>
+
+    <section class="video-section section-pad" id="video" aria-labelledby="video-title"><div class="shell"><div class="section-index">05 / VIDEO TÀI LIỆU</div><div class="video-intro"><p class="kicker">XEM LẠI CHIẾN DỊCH ĐIỆN BIÊN PHỦ</p><h2 id="video-title">VIDEO TÀI LIỆU <span>LIÊN QUAN.</span></h2><p>Ba góc nhìn về chiến dịch lịch sử. Chọn video để xem trên YouTube.</p></div><div class="video-grid">
+      <a class="video-card" href="https://www.youtube.com/watch?v=zRa9rAOWrKg" target="_blank" rel="noopener noreferrer" aria-label="Xem video Chiến dịch Điện Biên Phủ, đỉnh cao của nghệ thuật quân sự Việt Nam trên YouTube"><img src="https://i.ytimg.com/vi/zRa9rAOWrKg/hqdefault.jpg" width="480" height="360" loading="lazy" alt=""><span class="video-play" aria-hidden="true">▶</span><span class="video-caption"><small>BÁO QUÂN ĐỘI NHÂN DÂN</small><strong>Chiến dịch Điện Biên Phủ — đỉnh cao nghệ thuật quân sự</strong><em>XEM TRÊN YOUTUBE ↗</em></span></a>
+      <a class="video-card" href="https://www.youtube.com/watch?v=Dykwdja71IU" target="_blank" rel="noopener noreferrer" aria-label="Xem video Chiến dịch Điện Biên Phủ 1954, lừng lẫy năm châu trên YouTube"><img src="https://i.ytimg.com/vi/Dykwdja71IU/hqdefault.jpg" width="480" height="360" loading="lazy" alt=""><span class="video-play" aria-hidden="true">▶</span><span class="video-caption"><small>SỬ LƯỢC — TÓM TẮT LỊCH SỬ</small><strong>Điện Biên Phủ 1954 — lừng lẫy năm châu</strong><em>XEM TRÊN YOUTUBE ↗</em></span></a>
+      <a class="video-card" href="https://www.youtube.com/watch?v=kILCkBij2b8" target="_blank" rel="noopener noreferrer" aria-label="Xem video Pháp đã đại bại ở Điện Biên Phủ như thế nào trên YouTube"><img src="https://i.ytimg.com/vi/kILCkBij2b8/hqdefault.jpg" width="480" height="360" loading="lazy" alt=""><span class="video-play" aria-hidden="true">▶</span><span class="video-caption"><small>CD MEDIA — QUÂN SỰ</small><strong>Pháp đã đại bại ở Điện Biên Phủ như thế nào?</strong><em>XEM TRÊN YOUTUBE ↗</em></span></a>
+    </div></div></section>
   </main>
-  <footer><div class="shell footer-inner"><div class="brand"><span class="brand-mark">V<span>★</span></span><span>VNR<span class="gold">202</span><small>HÀNH TRÌNH LỊCH SỬ</small></span></div><p>Học lịch sử bằng sự tò mò.<br>Ghi nhớ bằng trải nghiệm.</p><a href="#top">VỀ ĐẦU TRANG ↑</a></div></footer>
+  <button id="page-music-toggle" class="page-music-toggle" type="button" aria-pressed="false" aria-label="Bật nhạc nền">♪ BẬT NHẠC NỀN</button>
+  <footer><div class="shell footer-inner"><div class="brand"><img class="brand-flag" src="assets/vietnam-flag.svg" alt=""><span>VNR<span class="gold">202</span><small>HÀNH TRÌNH LỊCH SỬ</small></span></div><p>Học lịch sử bằng sự tò mò.<br>Ghi nhớ bằng trải nghiệm.</p><a href="#top">VỀ ĐẦU TRANG ↑</a></div></footer>
 
   <dialog id="game-dialog" aria-labelledby="dialog-title"><div class="dialog-shell"><div class="dialog-top"><span>VNR202 / PHÒNG THỬ THÁCH</span><button id="close-dialog" type="button" aria-label="Đóng trò chơi">✕</button></div><div id="game-content"></div></div></dialog>
 </body>
