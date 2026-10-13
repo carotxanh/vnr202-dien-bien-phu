@@ -31,7 +31,7 @@ const keys = new Set();
 const tmp = new THREE.Vector3();
 const clock = new THREE.Clock();
 let renderer, scene, camera, player, playerParts, bunker, flagGroup, flagMesh;
-let role = null, status = 'intro', hp = 100, maxHp = 100, armor = 0, speed = 8, ammo = 12, reserve = 12;
+let role = null, status = 'intro', hp = 100, maxHp = 100, armor = 0, speed = 8, ammo = 5, reserve = 0;
 let rifle = false, grenades = 0, opened = 0, kills = 0, yaw = 0, pitch = .12, lastShot = 0, reloadUntil = 0;
 let nearest = null, activeQuestion = -1, quizDeadline = 0, soundEnabled = false, audioContext = null, ambientGain = null, toastTimer = 0;
 let nextBattleSoundAt = Infinity, shotFlashTimer = 0;
@@ -164,7 +164,7 @@ function makeCrates() {
   });
 }
 function makeEnemies() {
-  enemyPositions.forEach(([x,z],index)=>{const body=soldierModel(true);body.position.set(x,0,z);body.rotation.y=Math.PI;scene.add(body);enemies.push({index,body,anchor:new THREE.Vector3(x,0,z),phase:rand()*Math.PI*2,hp:2,alive:true,cooldown:4+rand()*3,walk:rand()*6})});
+  enemyPositions.forEach(([x,z],index)=>{const body=soldierModel(true);body.position.set(x,0,z);body.rotation.y=Math.PI;scene.add(body);enemies.push({index,body,anchor:new THREE.Vector3(x,0,z),phase:rand()*Math.PI*2,hp:1,alive:true,cooldown:4+rand()*3,walk:rand()*6})});
 }
 function makeWorld() {
   makeGround();makeTrenches();makeLandscape();makeBunker();makeCrates();makeEnemies();
@@ -248,9 +248,9 @@ function answer(index) {
   const q=questionBank[activeQuestion];hud.quiz.hidden=true;
   if(index!==q.answer){die('Trả lời chưa đúng. '+q.source);return}
   const crate=crates[activeQuestion];crate.opened=true;scene.remove(crate.group);opened++;
-  reserve=Math.min(36,reserve+16);hp=Math.min(maxHp,hp+30);
+  const loaded=Math.min(3,12-ammo);ammo+=loaded;reserve=Math.min(36,reserve+3-loaded);hp=Math.min(maxHp,hp+30);
   status='running';activeQuestion=-1;nearest=null;updateObjective();updateHud();
-  showToast(`CHÍNH XÁC! +16 ĐẠN, +30 THỂ LỰC • ${q.source}`);audio(760,.22,'triangle');
+  showToast(`CHÍNH XÁC! +3 ĐẠN, +30 THỂ LỰC • ${q.source}`);audio(760,.22,'triangle');
 }
 function takeDamage(value){if(status!=='running'&&status!=='quiz')return;const blocked=Math.min(armor,value*.7);armor=Math.max(0,armor-blocked);hp-=value-blocked;hud.damage.classList.add('active');setTimeout(()=>hud.damage.classList.remove('active'),190);audio(145,.15,'sawtooth',.07);updateHud();if(hp<=0)die('Trúng hỏa lực đối phương. Hãy tìm chỗ tránh và xử lý tiếp tế nhanh hơn.');}
 function die(reason){if(status==='dead'||status==='victory')return;status='dead';hud.quiz.hidden=true;hud.prompt.hidden=true;clearBomb();if(ambientGain)ambientGain.gain.setTargetAtTime(0,audioContext.currentTime,.35);if(document.pointerLockElement)document.exitPointerLock();
