@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101813">
+  <meta name="description" content="VNR202 Điện Biên Phủ 3D: nhập vai, di chuyển, chiến đấu và trả lời câu hỏi để nhận tiếp tế.">
+  <title>Điện Biên Phủ 3D — VNR202</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://vnr202.vercel.app">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="game3d.css?v=battle-audio-1">
+  <script type="module" src="game3d.js?v=autoplay-1"></script>
+</head>
+<body>
+  <audio id="background-music" src="https://vnr202.vercel.app/Victory%20at%20Dien%20Bien%20Phu.mp3" preload="auto" autoplay loop></audio>
+  <div id="game-root">
+    <div id="world" aria-label="Thế giới 3D chiến dịch Điện Biên Phủ"></div>
+    <div class="screen-grain" aria-hidden="true"></div>
+    <div id="damage-flash" aria-hidden="true"></div>
+    <div id="shot-flash" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand"><img class="brand-flag" src="assets/vietnam-flag.svg" alt=""><span class="brand-copy"><span class="brand-name">VNR <span>202</span></span><small>ĐIỆN BIÊN PHỦ / 3D</small></span></div>
+      <div class="mission-pill"><i></i><span id="mission-state">CHIẾN DỊCH 1954</span></div>
+      <div class="top-actions"><button id="sound-btn" type="button" aria-pressed="false" title="Bật hoặc tắt nhạc nền và âm thanh chiến trường">◖)) <span>BẬT ÂM THANH</span></button><a href="learn.html" id="learn-link">GIÁO TRÌNH <span aria-hidden="true">↗</span></a></div>
+    </header>
+
+    <aside class="objective-card" aria-live="polite"><span class="micro-label">NHIỆM VỤ HIỆN TẠI</span><strong id="objective-text">Chọn vai để bắt đầu chiến dịch</strong><div class="objective-track"><span id="objective-fill"></span></div><small id="objective-sub">HẠ 0 / 12 ĐỊCH • 0 / 5 HÒM ĐÃ MỞ</small></aside>
+    <div class="map-card"><div class="map-head"><span>THUNG LŨNG MƯỜNG THANH</span><b>1954</b></div><canvas id="minimap" width="160" height="160" aria-label="Bản đồ thu nhỏ"></canvas><div class="map-legend"><span><i class="dot-player"></i> BẠN</span><span><i class="dot-loot"></i> TIẾP TẾ</span><span><i class="dot-enemy"></i> ĐỊCH</span></div></div>
+    <div class="crosshair" id="crosshair" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
+    <div class="interaction-prompt" id="interaction-prompt" hidden><kbd>E</kbd><span id="interaction-text">NHẶT TIẾP TẾ</span></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="bomb-warning" class="bomb-warning" role="alert" hidden>⚠ REDZONE! BOM RƠI LIÊN TIẾP — NÉ VÙNG ĐỎ <b id="bomb-countdown">2</b>s</div>
+
+    <div class="bottom-hud"><div class="health-block"><div class="hud-title"><span>THỂ LỰC</span><b id="hp-text">100 / 100</b></div><div class="health-track"><span id="health-fill"></span></div><div class="armor-track"><span id="armor-fill"></span></div></div><div class="weapon-block"><div class="weapon-symbol">⌁</div><div><small id="weapon-name">SÚNG TRƯỜNG</small><strong><span id="ammo-text">5</span><em> / </em><span id="reserve-text">0</span></strong></div></div><div class="inventory-block"><span>TRANG BỊ</span><div id="inventory-icons"><i title="Chưa có tiếp tế">—</i></div></div></div>
+    <div class="control-hint">W A S D DI CHUYỂN <b>•</b> CHUỘT NGẮM / BẮN <b>•</b> E NHẶT ĐỒ <b>•</b> R NẠP ĐẠN <b>•</b> NÉ BOM KHI VÙNG ĐỎ HIỆN RA</div>
+
+    <div class="mobile-controls" id="mobile-controls" aria-label="Điều khiển trên điện thoại"><div class="joystick" id="joystick"><div id="joystick-knob"></div></div><div class="mobile-actions"><button id="mobile-interact" type="button">NHẶT</button><button id="mobile-fire" type="button">BẮN</button><button id="mobile-reload" type="button">NẠP</button></div></div>
+
+    <section class="overlay intro-overlay" id="intro-overlay" aria-labelledby="intro-title"><div class="intro-card"><div class="intro-kicker"><span>VNR202 / CHIẾN DỊCH 1954</span><span>TRẢI NGHIỆM 3D</span></div><h1 id="intro-title">ĐIỆN BIÊN PHỦ<br><em>VÀO TRẬN ĐỊA.</em></h1><p>Xuất phát với 5 viên đạn. Mỗi hòm tiếp tế trả lời đúng chỉ nhận thêm 3 viên, không hồi máu. Địch bắn nhanh; redzone rải 4 quả bom trên toàn bản đồ mỗi vài giây, cảnh báo ngắn và hất văng nhân vật nếu trúng vùng nổ.</p><div class="role-heading">CHỌN VAI NHẬP TRẬN</div><div class="role-list" id="role-list"><button type="button" class="role-card" data-role="soldier"><b>01</b><strong>CHIẾN SĨ</strong><small>Cân bằng • 100 thể lực</small></button><button type="button" class="role-card" data-role="porter"><b>02</b><strong>DÂN CÔNG</strong><small>Bền bỉ • 120 thể lực</small></button><button type="button" class="role-card" data-role="scout"><b>03</b><strong>TRINH SÁT</strong><small>Nhanh nhẹn • 90 thể lực</small></button></div><button class="primary" id="start-btn" type="button" disabled>BẮT ĐẦU CHIẾN DỊCH <span aria-hidden="true">↗</span></button><div class="intro-foot">THƯ VIỆN 3D: THREE.JS (MIT) <span>•</span> KIẾN THỨC: GIÁO TRÌNH VNR202, BUỔI 13–14</div></div></section>
+
+    <section class="quiz-panel" id="quiz-panel" hidden aria-labelledby="quiz-title"><div class="quiz-top"><span>THÙNG TIẾP TẾ / HỒ SƠ KIẾN THỨC</span><span id="quiz-timer">20s</span></div><h2 id="quiz-title">Giải mã tiếp tế</h2><p id="quiz-question"></p><div id="quiz-options" class="quiz-options"></div><div class="quiz-warning"><i></i> Chiến trường không tạm dừng. Đối phương vẫn có thể tấn công.</div></section>
+
+    <section class="overlay outcome-overlay" id="outcome-overlay" hidden aria-live="assertive"><div class="outcome-card" id="outcome-card"></div></section>
+    <div id="webgl-error" class="webgl-error" hidden>Thiết bị hoặc trình duyệt này chưa bật WebGL 2. Hãy thử Chrome/Edge mới hơn hoặc bật tăng tốc phần cứng.</div>
+  </div>
+</body>
+</html>

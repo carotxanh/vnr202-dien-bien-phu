@@ -76,7 +76,20 @@ renderEras();renderProgress();
 
 const pageMusic=$('#page-background-music'),pageMusicToggle=$('#page-music-toggle');
 pageMusic.volume=.25;
+let pageMusicWanted=true;
+function syncPageMusicButton(){
+  const playing=!pageMusic.paused;
+  pageMusicToggle.textContent=playing?'♫ TẮT NHẠC NỀN':'♪ BẬT NHẠC NỀN';
+  pageMusicToggle.setAttribute('aria-pressed',String(playing));
+  pageMusicToggle.setAttribute('aria-label',playing?'Tắt nhạc nền':'Bật nhạc nền');
+}
+function playPageMusic(){if(pageMusicWanted)pageMusic.play().then(syncPageMusicButton).catch(syncPageMusicButton)}
+pageMusic.addEventListener('play',syncPageMusicButton);
+pageMusic.addEventListener('pause',syncPageMusicButton);
 pageMusicToggle.addEventListener('click',()=>{
-  if(!pageMusic.paused){pageMusic.pause();pageMusicToggle.textContent='♪ BẬT NHẠC NỀN';pageMusicToggle.setAttribute('aria-pressed','false');pageMusicToggle.setAttribute('aria-label','Bật nhạc nền');return}
-  pageMusic.play().then(()=>{pageMusicToggle.textContent='♫ TẮT NHẠC NỀN';pageMusicToggle.setAttribute('aria-pressed','true');pageMusicToggle.setAttribute('aria-label','Tắt nhạc nền')}).catch(()=>{pageMusicToggle.textContent='KHÔNG TẢI ĐƯỢC NHẠC';setTimeout(()=>pageMusicToggle.textContent='♪ BẬT NHẠC NỀN',2800)})
+  if(!pageMusic.paused){pageMusicWanted=false;pageMusic.pause();return}
+  pageMusicWanted=true;playPageMusic();
 });
+document.addEventListener('pointerdown',event=>{if(!event.target.closest('#page-music-toggle')&&pageMusic.paused)playPageMusic()},{capture:true});
+document.addEventListener('keydown',()=>{if(pageMusic.paused)playPageMusic()},{capture:true});
+playPageMusic();

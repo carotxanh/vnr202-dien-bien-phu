@@ -206,7 +206,7 @@ function setBattleSound(enabled){
   button.innerHTML=enabled?'◖)) <span>TẮT ÂM THANH</span>':'◖)) <span>BẬT ÂM THANH</span>';
   if(!enabled){backgroundMusic.pause();if(ambientGain&&audioContext)ambientGain.gain.setTargetAtTime(0,audioContext.currentTime,.12);return}
   try{
-    backgroundMusic.play().catch(()=>showToast('Không thể tải nhạc nền từ website tham chiếu.'));
+    backgroundMusic.play().catch(error=>{if(error.name!=='NotAllowedError')showToast('Không thể tải nhạc nền từ website tham chiếu.')});
     audioContext ||= new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();
     if(!ambientGain){
       const buffer=audioContext.createBuffer(1,audioContext.sampleRate*2,audioContext.sampleRate),data=buffer.getChannelData(0);
@@ -386,3 +386,7 @@ function bindControls(){document.querySelectorAll('[data-role]').forEach(button=
   $('#mobile-interact').addEventListener('click',interact);$('#mobile-fire').addEventListener('pointerdown',event=>{event.preventDefault();fire()});$('#mobile-reload').addEventListener('click',reload);
 }
 if(initRenderer())bindControls();
+// Try at page load, then retry on the first interaction if autoplay is blocked.
+setBattleSound(true);
+document.addEventListener('pointerdown',event=>{if(soundEnabled&&backgroundMusic.paused&&!event.target.closest('#sound-btn'))backgroundMusic.play().catch(()=>{})},{capture:true});
+document.addEventListener('keydown',()=>{if(soundEnabled&&backgroundMusic.paused)backgroundMusic.play().catch(()=>{})},{capture:true});
