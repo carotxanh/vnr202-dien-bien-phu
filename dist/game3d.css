@@ -4,3 +4,4 @@
 .topbar .brand-name{display:block;white-space:nowrap}
 #shot-flash{position:absolute;inset:0;z-index:15;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 52%,#fff0a454 0%,#ffbd421c 11%,transparent 28%);transition:opacity .09s}
 #shot-flash.active{opacity:1}
+@media(max-width:800px){.bomb-warning{white-space:normal;text-align:center;width:min(440px,calc(100vw - 24px))}}

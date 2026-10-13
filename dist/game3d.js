@@ -37,7 +37,7 @@ let nearest = null, activeQuestion = -1, quizDeadline = 0, soundEnabled = false,
 let nextBattleSoundAt = Infinity, shotFlashTimer = 0;
 let enemies = [], crates = [], enemyBullets = [], effects = [], obstacles = [], shrubs = [];
 let lastTime = 0, hudTime = 0, miniTime = 0, motion = 0, touchMove = { x: 0, y: 0 }, touchLookId = null;
-let activeBomb = null, nextBombAt = Infinity;
+let activeBombs = [], nextBombAt = Infinity, lastBlastDamageAt = -Infinity;
 const knockback = new THREE.Vector3();
 let lift = 0, liftSpeed = 0, staggerUntil = 0;
 
@@ -179,7 +179,7 @@ function setRole(id) {
 }
 function startGame() {
   if(!role)return;
-  const info=roles[role];maxHp=info.maxHp;hp=maxHp;speed=info.speed;status='running';player.visible=true;hud.intro.hidden=true;nextBombAt=performance.now()+9000;
+  const info=roles[role];maxHp=info.maxHp;hp=maxHp;speed=info.speed;status='running';player.visible=true;hud.intro.hidden=true;nextBombAt=performance.now()+5000;
   updateObjective();updateHud();showToast('WASD để di chuyển • bấm vào chiến trường để ngắm và bắn');
   setBattleSound(true);
 }
@@ -283,29 +283,43 @@ function fire(){if(status!=='running'||performance.now()-lastShot<(rifle?230:430
 function tracer(a,b,color,ttl){const direction=b.clone().sub(a),length=direction.length(),line=mesh(new THREE.CylinderGeometry(.025,.025,length,5),new THREE.MeshBasicMaterial({color}),0,0,0);line.position.copy(a).add(b).multiplyScalar(.5);line.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());effects.push({mesh:line,ttl})}
 function burst(point,count=14,color=0xffca7d){for(let i=0;i<count;i++){const p=mesh(new THREE.SphereGeometry(.06+rand()*.08,5,4),new THREE.MeshBasicMaterial({color}),point.x,point.y,point.z);effects.push({mesh:p,ttl:.5+rand()*.4,velocity:new THREE.Vector3((rand()-.5)*8,rand()*7,(rand()-.5)*8)})}}
 
-function clearBomb(){if(activeBomb){scene.remove(activeBomb.marker);activeBomb.marker.traverse(part=>{part.geometry?.dispose();part.material?.dispose()});activeBomb=null}$('#bomb-warning').hidden=true}
-function spawnBomb(time){
-  const nearPlayer=rand()<.55;
-  const x=nearPlayer?THREE.MathUtils.clamp(player.position.x+(rand()-.5)*14,-36,36):rand()*72-36;
-  const z=nearPlayer?THREE.MathUtils.clamp(player.position.z+(rand()-.5)*14,-44,40):rand()*84-44;
+function removeBomb(bomb){scene.remove(bomb.marker);bomb.marker.traverse(part=>{part.geometry?.dispose();part.material?.dispose()})}
+function clearBomb(){activeBombs.forEach(removeBomb);activeBombs=[];$('#bomb-warning').hidden=true}
+function spawnBomb(time,x,z,delay=0){
   const marker=new THREE.Group();marker.position.set(x,terrainHeight(x,z)+.1,z);scene.add(marker);
   const disc=mesh(new THREE.CircleGeometry(6.5,32),new THREE.MeshBasicMaterial({color:0xc9221d,transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide}),0,.02,0,marker);disc.rotation.x=-Math.PI/2;
   const ring=mesh(new THREE.RingGeometry(6.15,6.55,32),new THREE.MeshBasicMaterial({color:0xff4a30,transparent:true,opacity:.92,depthWrite:false,side:THREE.DoubleSide}),0,.05,0,marker);ring.rotation.x=-Math.PI/2;
-  const falling=mesh(new THREE.ConeGeometry(.42,1.5,8),new THREE.MeshStandardMaterial({color:0x282d27,metalness:.35}),0,19,0,marker);falling.rotation.z=Math.PI;
-  const fuse=mesh(new THREE.SphereGeometry(.16,6,5),new THREE.MeshBasicMaterial({color:0xffad51}),0,20,0,marker);
-  activeBomb={x,z,marker,disc,ring,falling,fuse,detonateAt:time+3200};$('#bomb-warning').hidden=false;showToast('BOM SẮP RƠI — CHẠY KHỎI VÙNG ĐỎ!');audio(740,.3,'sawtooth',.1);
+  const falling=mesh(new THREE.ConeGeometry(.42,1.5,8),new THREE.MeshStandardMaterial({color:0x282d27,metalness:.35}),0,17,0,marker);falling.rotation.z=Math.PI;
+  const fuse=mesh(new THREE.SphereGeometry(.16,6,5),new THREE.MeshBasicMaterial({color:0xffad51}),0,18,0,marker);
+  activeBombs.push({x,z,marker,disc,ring,falling,fuse,flightTime:1900+delay,detonateAt:time+1900+delay});
+}
+function spawnRedzone(time){
+  const nearPlayer=rand()<.65;
+  const cx=nearPlayer?THREE.MathUtils.clamp(player.position.x+(rand()-.5)*5,-36,36):rand()*72-36;
+  const cz=nearPlayer?THREE.MathUtils.clamp(player.position.z+(rand()-.5)*5,-44,40):rand()*84-44;
+  for(let i=0;i<4;i++){
+    const x=THREE.MathUtils.clamp(cx+(i?(rand()-.5)*20:0),-36,36);
+    const z=THREE.MathUtils.clamp(cz+(i?(rand()-.5)*20:0),-44,40);
+    spawnBomb(time,x,z,i*260);
+  }
+  nextBombAt=time+4000+rand()*1500;
+  $('#bomb-warning').hidden=false;showToast('REDZONE — 4 QUẢ BOM ĐANG LAO XUỐNG!');audio(740,.25,'sawtooth',.1);
 }
 function updateBomb(time){
   if(status!=='running'&&status!=='quiz')return;
-  if(!activeBomb){if(status==='running'&&time>=nextBombAt)spawnBomb(time);return}
-  const bomb=activeBomb,remaining=Math.max(0,bomb.detonateAt-time);$('#bomb-countdown').textContent=Math.ceil(remaining/1000);
-  bomb.disc.material.opacity=.22+Math.abs(Math.sin(time*.009))*.2;bomb.ring.scale.setScalar(1+Math.sin(time*.012)*.035);
-  bomb.falling.position.y=.7+remaining/3200*18.3;bomb.fuse.position.y=bomb.falling.position.y+1;
-  if(remaining>0)return;
-  const distance=Math.hypot(player.position.x-bomb.x,player.position.z-bomb.z),blastPoint=new THREE.Vector3(bomb.x,terrainHeight(bomb.x,bomb.z)+.5,bomb.z);
-  clearBomb();burst(blastPoint,32,0xff873e);battleSound('bomb');
-  if(distance<6.5){launchPlayer(bomb.x,bomb.z);takeDamage(42,'Trúng sóng xung kích từ bom. Hãy rời vòng cảnh báo trước khi bom rơi.');if(status!=='dead')showToast('TRÚNG SÓNG XUNG KÍCH — NHÂN VẬT BỊ HẤT VĂNG!')}else showToast('ĐÃ NÉ ĐƯỢC BOM!');
-  nextBombAt=time+9000+rand()*6000;
+  if(time>=nextBombAt)spawnRedzone(time);
+  for(let i=activeBombs.length-1;i>=0;i--){
+    const bomb=activeBombs[i],remaining=Math.max(0,bomb.detonateAt-time);
+    bomb.disc.material.opacity=.22+Math.abs(Math.sin(time*.013))*.22;bomb.ring.scale.setScalar(1+Math.sin(time*.017)*.055);
+    bomb.falling.position.y=.7+remaining/bomb.flightTime*16.3;bomb.fuse.position.y=bomb.falling.position.y+1;
+    if(remaining>0)continue;
+    const distance=Math.hypot(player.position.x-bomb.x,player.position.z-bomb.z),blastPoint=new THREE.Vector3(bomb.x,terrainHeight(bomb.x,bomb.z)+.5,bomb.z);
+    activeBombs.splice(i,1);removeBomb(bomb);burst(blastPoint,22,0xff873e);battleSound('bomb');
+    if(distance<6.5&&time-lastBlastDamageAt>800){lastBlastDamageAt=time;launchPlayer(bomb.x,bomb.z);takeDamage(42,'Trúng bom trong redzone. Hãy chạy khỏi các vòng cảnh báo.');if(status!=='dead')showToast('TRÚNG REDZONE — NHÂN VẬT BỊ HẤT VĂNG!')}
+    if(status==='dead')break;
+  }
+  $('#bomb-warning').hidden=!activeBombs.length;
+  if(activeBombs.length)$('#bomb-countdown').textContent=Math.ceil(Math.min(...activeBombs.map(b=>Math.max(0,b.detonateAt-time)))/1000);
 }
 
 function launchPlayer(x,z){
@@ -351,7 +365,7 @@ function drawMap(){const canvas=$('#minimap'),ctx=canvas.getContext('2d'),w=canv
   const bunkerPoint=project(0,-49);ctx.fillStyle='#d6b775';ctx.fillRect(bunkerPoint.x-6,bunkerPoint.y-4,12,8);
   for(const c of crates){if(c.opened)continue;const p=project(c.group.position.x,c.group.position.z);ctx.fillStyle='#69d9df';ctx.fillRect(p.x-3,p.y-3,6,6)}
   for(const e of enemies){if(!e.alive)continue;const p=project(e.body.position.x,e.body.position.z);ctx.fillStyle='#f0785a';ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill()}
-  if(activeBomb){const b=project(activeBomb.x,activeBomb.z);ctx.strokeStyle='#ff4538';ctx.lineWidth=2;ctx.beginPath();ctx.arc(b.x,b.y,12,0,Math.PI*2);ctx.stroke()}
+  for(const bomb of activeBombs){const b=project(bomb.x,bomb.z);ctx.strokeStyle='#ff4538';ctx.lineWidth=2;ctx.beginPath();ctx.arc(b.x,b.y,12,0,Math.PI*2);ctx.stroke()}
   const p=project(player.position.x,player.position.z);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(yaw);ctx.fillStyle='#ffdf7c';ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(-4,5);ctx.lineTo(4,5);ctx.closePath();ctx.fill();ctx.restore()}
 function tick(time){if(!renderer||document.hidden)return;const dt=Math.min(.045,lastTime?(time-lastTime)/1000:.016);lastTime=time;
   if(status==='running')updatePlayer(dt);updateEnemies(dt,time);updateBullets(dt);updateBomb(time);updateKnockback(dt);updateCamera(dt);updateEffects(dt,time);
