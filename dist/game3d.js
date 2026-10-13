@@ -19,23 +19,24 @@ const roles = {
   scout: { maxHp: 90, speed: 10.2, label: 'TRINH SÁT' }
 };
 const questionBank = [
-  { q: 'Kế hoạch Nava muốn biến Điện Biên Phủ thành điều gì?', options: ['Một tập đoàn cứ điểm để quyết chiến', 'Một thương cảng quốc tế', 'Thủ đô mới', 'Một căn cứ hải quân'], answer: 0, reward: 'SÚNG TRƯỜNG TĂNG CƯỜNG', kind: 'rifle', source: 'Buổi 13, slide 14' },
-  { q: 'Mục tiêu của tiến công Đông Xuân 1953–1954 là gì?', options: ['Rút khỏi Tây Bắc', 'Giữ thế chủ động, buộc địch phân tán lực lượng', 'Chỉ phòng thủ Hà Nội', 'Ngừng hoạt động quân sự'], answer: 1, reward: 'TÚI CỨU THƯƠNG', kind: 'medkit', source: 'Buổi 13, slide 15' },
-  { q: 'Ai là Tư lệnh Chiến dịch Điện Biên Phủ?', options: ['Lê Duẩn', 'Đỗ Mười', 'Đại tướng Võ Nguyên Giáp', 'Nguyễn Văn Linh'], answer: 2, reward: 'ÁO GIÁP DÃ CHIẾN', kind: 'armor', source: 'Buổi 13, slide 15' },
-  { q: 'Chiến thắng Điện Biên Phủ được gắn với kết quả ngoại giao nào?', options: ['Hiệp định Paris 1973', 'Hiệp định Genève 1954', 'Cương lĩnh 1991', 'Hiệp định Sơ bộ 1946'], answer: 1, reward: 'LỰU ĐẠN TIẾP TẾ', kind: 'grenade', source: 'Buổi 13, slide 16–17' },
-  { q: 'Chiến dịch Điện Biên Phủ toàn thắng vào ngày nào?', options: ['30/4/1975', '21/7/1954', '7/5/1954', '2/9/1945'], answer: 2, reward: 'ĐẠN TIẾP TẾ', kind: 'ammo', source: 'Buổi 13–14; mốc chiến dịch 7/5/1954' }
+  { q: 'Kế hoạch Nava muốn biến Điện Biên Phủ thành điều gì?', options: ['Một tập đoàn cứ điểm để quyết chiến', 'Một thương cảng quốc tế', 'Thủ đô mới', 'Một căn cứ hải quân'], answer: 0, source: 'Buổi 13, slide 14' },
+  { q: 'Mục tiêu của tiến công Đông Xuân 1953–1954 là gì?', options: ['Rút khỏi Tây Bắc', 'Giữ thế chủ động, buộc địch phân tán lực lượng', 'Chỉ phòng thủ Hà Nội', 'Ngừng hoạt động quân sự'], answer: 1, source: 'Buổi 13, slide 15' },
+  { q: 'Ai là Tư lệnh Chiến dịch Điện Biên Phủ?', options: ['Lê Duẩn', 'Đỗ Mười', 'Đại tướng Võ Nguyên Giáp', 'Nguyễn Văn Linh'], answer: 2, source: 'Buổi 13, slide 15' },
+  { q: 'Chiến thắng Điện Biên Phủ được gắn với kết quả ngoại giao nào?', options: ['Hiệp định Paris 1973', 'Hiệp định Genève 1954', 'Cương lĩnh 1991', 'Hiệp định Sơ bộ 1946'], answer: 1, source: 'Buổi 13, slide 16–17' },
+  { q: 'Chiến dịch Điện Biên Phủ toàn thắng vào ngày nào?', options: ['30/4/1975', '21/7/1954', '7/5/1954', '2/9/1945'], answer: 2, source: 'Buổi 13–14; mốc chiến dịch 7/5/1954' }
 ];
 const cratePositions = [[-2, 25], [4, 9], [-4, -6], [3, -21], [-2, -36]];
-const enemyPositions = [[9, 17], [-10, 6], [11, -9], [-11, -19], [8, -31], [-8, -40]];
+const enemyPositions = [[9, 23], [-9, 19], [12, 11], [-12, 4], [8, -3], [-9, -9], [13, -16], [-12, -23], [9, -30], [-8, -38], [13, -41], [-14, -32]];
 const keys = new Set();
 const tmp = new THREE.Vector3();
 const clock = new THREE.Clock();
 let renderer, scene, camera, player, playerParts, bunker, flagGroup, flagMesh;
-let role = null, status = 'intro', hp = 100, maxHp = 100, armor = 0, speed = 8, ammo = 12, reserve = 48;
+let role = null, status = 'intro', hp = 100, maxHp = 100, armor = 0, speed = 8, ammo = 12, reserve = 12;
 let rifle = false, grenades = 0, opened = 0, kills = 0, yaw = 0, pitch = .12, lastShot = 0, reloadUntil = 0;
 let nearest = null, activeQuestion = -1, quizDeadline = 0, soundEnabled = false, audioContext = null, toastTimer = 0;
 let enemies = [], crates = [], enemyBullets = [], effects = [], obstacles = [], shrubs = [];
 let lastTime = 0, hudTime = 0, miniTime = 0, motion = 0, touchMove = { x: 0, y: 0 }, touchLookId = null;
+let activeBomb = null, nextBombAt = Infinity;
 
 function material(color, roughness = .94) { return new THREE.MeshStandardMaterial({ color, roughness }); }
 const mats = {
@@ -162,7 +163,7 @@ function makeCrates() {
   });
 }
 function makeEnemies() {
-  enemyPositions.forEach(([x,z],index)=>{const body=soldierModel(true);body.position.set(x,0,z);body.rotation.y=Math.PI;scene.add(body);enemies.push({index,body,hp:2,alive:true,cooldown:3.5+rand()*2,walk:rand()*6})});
+  enemyPositions.forEach(([x,z],index)=>{const body=soldierModel(true);body.position.set(x,0,z);body.rotation.y=Math.PI;scene.add(body);enemies.push({index,body,anchor:new THREE.Vector3(x,0,z),phase:rand()*Math.PI*2,hp:2,alive:true,cooldown:4+rand()*3,walk:rand()*6})});
 }
 function makeWorld() {
   makeGround();makeTrenches();makeLandscape();makeBunker();makeCrates();makeEnemies();
@@ -175,31 +176,29 @@ function setRole(id) {
 }
 function startGame() {
   if(!role)return;
-  const info=roles[role];maxHp=info.maxHp;hp=maxHp;speed=info.speed;status='running';player.visible=true;hud.intro.hidden=true;
+  const info=roles[role];maxHp=info.maxHp;hp=maxHp;speed=info.speed;status='running';player.visible=true;hud.intro.hidden=true;nextBombAt=performance.now()+15000;
   updateObjective();updateHud();showToast('WASD để di chuyển • bấm vào chiến trường để ngắm và bắn');
 }
 function updateObjective() {
-  hud.objectiveFill.style.width=`${opened/5*100}%`;
-  hud.objectiveSub.textContent=`${opened} / 5 THÙNG TIẾP TẾ`;
+  hud.objectiveFill.style.width=`${kills/enemies.length*100}%`;
+  hud.objectiveSub.textContent=`HẠ ${kills} / ${enemies.length} ĐỊCH • ${opened} / 5 HÒM ĐÃ MỞ`;
   if(status==='intro')hud.objective.textContent='Chọn vai để bắt đầu chiến dịch';
   else if(status==='victory')hud.objective.textContent='Chiến dịch toàn thắng!';
   else if(status==='dead')hud.objective.textContent='Nhiệm vụ đã dừng lại';
-  else if(opened===5)hud.objective.textContent='Tiến đến cửa hầm chỉ huy và nhấn E';
-  else hud.objective.textContent=`Tìm thùng tiếp tế ${opened+1}/5 và trả lời câu hỏi`;
+  else hud.objective.textContent='Hạ toàn bộ đối phương • hòm tiếp tế tùy chọn';
 }
 function updateHud() {
   hud.hp.textContent=`${Math.ceil(Math.max(0,hp))} / ${maxHp}`;hud.health.style.width=`${Math.max(0,hp/maxHp*100)}%`;
   hud.armor.style.width=`${armor}%`;hud.ammo.textContent=ammo;hud.reserve.textContent=reserve;
   hud.weapon.textContent=rifle?'SÚNG TRƯỜNG TĂNG CƯỜNG':'SÚNG TRƯỜNG';
   const icons=[];if(rifle)icons.push('<i title="Súng tăng cường">⌁</i>');if(armor)icons.push('<i title="Áo giáp">◆</i>');if(grenades)icons.push(`<i title="Lựu đạn">✦${grenades}</i>`);hud.inventory.innerHTML=icons.join('')||'<i title="Chưa có tiếp tế">—</i>';
-  hud.mission.textContent=status==='quiz'?'ĐANG GIẢI MÃ TIẾP TẾ':status==='victory'?'CHIẾN DỊCH TOÀN THẮNG':status==='dead'?'NHIỆM VỤ KẾT THÚC':`TIẾP TẾ ${opened}/5  •  HẠ ${kills} ĐỊCH`;
+  hud.mission.textContent=status==='quiz'?'ĐANG GIẢI MÃ TIẾP TẾ':status==='victory'?'CHIẾN DỊCH TOÀN THẮNG':status==='dead'?'NHIỆM VỤ KẾT THÚC':`HẠ ${kills}/${enemies.length} ĐỊCH • ĐẠN ${ammo+reserve}`;
 }
 function showToast(text) { hud.toast.textContent=text;hud.toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>hud.toast.classList.remove('show'),2800); }
 function audio(freq=320,duration=.12,type='sine',volume=.06){if(!soundEnabled)return;try{audioContext ||= new(window.AudioContext||window.webkitAudioContext)();const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(volume,audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);osc.connect(gain).connect(audioContext.destination);osc.start();osc.stop(audioContext.currentTime+duration)}catch{}}
 
 function interact() {
   if(status!=='running')return;
-  if(opened===5&&Math.hypot(player.position.x,player.position.z+45)<6){victory();return}
   if(!nearest||nearest.opened)return;
   activeQuestion=nearest.index;status='quiz';quizDeadline=performance.now()+26000;
   if(document.pointerLockElement)document.exitPointerLock();
@@ -212,62 +211,84 @@ function answer(index) {
   const q=questionBank[activeQuestion];hud.quiz.hidden=true;
   if(index!==q.answer){die('Trả lời chưa đúng. '+q.source);return}
   const crate=crates[activeQuestion];crate.opened=true;scene.remove(crate.group);opened++;
-  if(q.kind==='rifle'){rifle=true;reserve+=24}
-  if(q.kind==='medkit')hp=Math.min(maxHp,hp+55);
-  if(q.kind==='armor')armor=Math.min(100,armor+65);
-  if(q.kind==='grenade')grenades+=2;
-  if(q.kind==='ammo'){reserve+=60;ammo=rifle?24:12}
+  reserve=Math.min(36,reserve+16);hp=Math.min(maxHp,hp+30);
   status='running';activeQuestion=-1;nearest=null;updateObjective();updateHud();
-  showToast(`CHÍNH XÁC! NHẬN ${q.reward} • ${q.source}`);audio(760,.22,'triangle');
+  showToast(`CHÍNH XÁC! +16 ĐẠN, +30 THỂ LỰC • ${q.source}`);audio(760,.22,'triangle');
 }
 function takeDamage(value){if(status!=='running'&&status!=='quiz')return;const blocked=Math.min(armor,value*.7);armor=Math.max(0,armor-blocked);hp-=value-blocked;hud.damage.classList.add('active');setTimeout(()=>hud.damage.classList.remove('active'),190);audio(145,.15,'sawtooth',.07);updateHud();if(hp<=0)die('Trúng hỏa lực đối phương. Hãy tìm chỗ tránh và xử lý tiếp tế nhanh hơn.');}
-function die(reason){if(status==='dead'||status==='victory')return;status='dead';hud.quiz.hidden=true;hud.prompt.hidden=true;if(document.pointerLockElement)document.exitPointerLock();
-  hud.outcome.hidden=false;hud.outcomeCard.innerHTML=`<span class="outcome-kicker">HÀNH TRÌNH DỪNG LẠI / ${opened} THÙNG TIẾP TẾ</span><h2>BẠN ĐÃ HY SINH<br><em>THẬT ANH DŨNG</em></h2><p>${reason}</p><p>Những câu hỏi và trang bị đang chờ bạn ở lần xuất phát tiếp theo.</p><div class="outcome-actions"><button type="button" class="primary" id="retry-btn">THỬ LẠI ↻</button><a href="learn.html">VỀ GIÁO TRÌNH</a></div><small>Trò chơi mô phỏng, không tái hiện chính xác diễn biến chiến đấu.</small>`;
+function die(reason){if(status==='dead'||status==='victory')return;status='dead';hud.quiz.hidden=true;hud.prompt.hidden=true;clearBomb();if(document.pointerLockElement)document.exitPointerLock();
+  hud.outcome.hidden=false;hud.outcomeCard.innerHTML=`<span class="outcome-kicker">HÀNH TRÌNH DỪNG LẠI / ĐÃ HẠ ${kills} ĐỐI PHƯƠNG</span><h2>BẠN ĐÃ HY SINH<br><em>THẬT ANH DŨNG</em></h2><p>${reason}</p><p>Hòm tiếp tế kiến thức giúp bạn có thêm đạn và thể lực cho lần xuất phát tiếp theo.</p><div class="outcome-actions"><button type="button" class="primary" id="retry-btn">THỬ LẠI ↻</button><a href="learn.html">VỀ GIÁO TRÌNH</a></div><small>Trò chơi mô phỏng, không tái hiện chính xác diễn biến chiến đấu.</small>`;
   $('#retry-btn').onclick=()=>location.reload();updateObjective();updateHud();audio(95,.5,'sawtooth',.1);
 }
-function victory(){if(status!=='running')return;status='victory';flagGroup.visible=true;hud.prompt.hidden=true;if(document.pointerLockElement)document.exitPointerLock();
-  hud.outcome.hidden=false;hud.outcomeCard.innerHTML=`<span class="outcome-kicker">07 / 05 / 1954 — ĐIỆN BIÊN PHỦ</span><h2>CHÚC MỪNG<br><em>CHIẾN THẮNG!</em></h2><p>Bạn đã vượt 5 thùng tiếp tế, chiến đấu đến hầm chỉ huy và dựng lá cờ đỏ sao vàng. Chiến dịch Điện Biên Phủ toàn thắng!</p><div class="outcome-actions"><button type="button" class="primary" id="retry-btn">CHƠI LẠI ↻</button><a href="learn.html">ÔN TẬP VNR202</a></div><small>Kiến thức: giáo trình VNR202, buổi 13–14 • Thế giới 3D là minh họa.</small>`;
+function victory(){if(status!=='running')return;status='victory';flagGroup.visible=true;hud.prompt.hidden=true;clearBomb();if(document.pointerLockElement)document.exitPointerLock();
+  hud.outcome.hidden=false;hud.outcomeCard.innerHTML=`<span class="outcome-kicker">07 / 05 / 1954 — ĐIỆN BIÊN PHỦ</span><h2>CHÚC MỪNG<br><em>CHIẾN THẮNG!</em></h2><p>Bạn đã hạ toàn bộ ${enemies.length} đối phương. Lá cờ đỏ sao vàng tung bay trên hầm chỉ huy! Hòm tiếp tế là lựa chọn để bổ sung đạn và hồi máu.</p><div class="outcome-actions"><button type="button" class="primary" id="retry-btn">CHƠI LẠI ↻</button><a href="learn.html">ÔN TẬP VNR202</a></div><small>Kiến thức: giáo trình VNR202, buổi 13–14 • Thế giới 3D là minh họa.</small>`;
   $('#retry-btn').onclick=()=>location.reload();updateObjective();updateHud();try{localStorage.setItem('vnr202-3d-victory','1')}catch{}
   for(let i=0;i<4;i++)setTimeout(()=>burst(new THREE.Vector3((rand()-.5)*18,10+rand()*9,-44)),i*400);
   [480,580,720,960].forEach((f,i)=>setTimeout(()=>audio(f,.24,'triangle'),i*140));
 }
 
 function reload(){if(status!=='running'||reloadUntil>performance.now()||ammo>=(rifle?24:12)||reserve===0)return;reloadUntil=performance.now()+1250;showToast('ĐANG NẠP ĐẠN...');setTimeout(()=>{if(status==='dead')return;const capacity=rifle?24:12,amount=Math.min(capacity-ammo,reserve);ammo+=amount;reserve-=amount;updateHud();audio(420,.08,'square')},1250)}
+function killEnemy(enemy){if(!enemy.alive)return;enemy.alive=false;scene.remove(enemy.body);kills++;updateObjective();updateHud();if(kills===enemies.length)victory();else showToast(`ĐÃ HẠ ĐỐI PHƯƠNG • CÒN ${enemies.length-kills}`)}
 function fire(){if(status!=='running'||performance.now()-lastShot<(rifle?230:430)||reloadUntil>performance.now())return;if(ammo<=0){showToast('HẾT ĐẠN — BẤM R ĐỂ NẠP');audio(170,.06,'square');return}lastShot=performance.now();ammo--;updateHud();audio(155,.11,'sawtooth',.08);
   const start=player.position.clone().add(new THREE.Vector3(0,1.6,0));const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(0,0),camera);
   let hit=null,best=Infinity;
-  for(const e of enemies){if(!e.alive)continue;const target=e.body.position.clone().add(new THREE.Vector3(0,1.5,0));const to=target.clone().sub(ray.ray.origin),along=to.dot(ray.ray.direction),near=ray.ray.origin.clone().addScaledVector(ray.ray.direction,along).distanceTo(target);if(along>0&&along<56&&near<.9&&along<best){best=along;hit=e}}
+  for(const e of enemies){if(!e.alive)continue;const target=e.body.position.clone().add(new THREE.Vector3(0,1.5,0));const to=target.clone().sub(ray.ray.origin),along=to.dot(ray.ray.direction),near=ray.ray.origin.clone().addScaledVector(ray.ray.direction,along).distanceTo(target);if(along>0&&along<56&&near<1.15&&along<best){best=along;hit=e}}
   const end=hit?hit.body.position.clone().add(new THREE.Vector3(0,1.5,0)):ray.ray.origin.clone().addScaledVector(ray.ray.direction,45);
   tracer(start,end,0xffd581,.16);
-  if(hit){hit.hp-=rifle?2:1;burst(end,5,0xffb767);if(hit.hp<=0){hit.alive=false;scene.remove(hit.body);kills++;showToast('ĐÃ HẠ MỘT ĐỐI PHƯƠNG');updateHud()}}
+  if(hit){hit.hp-=rifle?2:1;burst(end,5,0xffb767);if(hit.hp<=0)killEnemy(hit)}
 }
-function throwGrenade(){if(status!=='running'||grenades<=0)return;grenades--;updateHud();const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),point=player.position.clone().addScaledVector(forward,12);showToast('LỰU ĐẠN ĐÃ ĐƯỢC SỬ DỤNG');setTimeout(()=>{if(status==='dead')return;burst(point.clone().add(new THREE.Vector3(0,1,0)),22,0xffad61);for(const e of enemies){if(!e.alive)continue;if(e.body.position.distanceTo(point)<8){e.hp-=3;if(e.hp<=0){e.alive=false;scene.remove(e.body);kills++}}}updateHud();audio(75,.35,'sawtooth',.12)},650)}
 function tracer(a,b,color,ttl){const direction=b.clone().sub(a),length=direction.length(),line=mesh(new THREE.CylinderGeometry(.025,.025,length,5),new THREE.MeshBasicMaterial({color}),0,0,0);line.position.copy(a).add(b).multiplyScalar(.5);line.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());effects.push({mesh:line,ttl})}
 function burst(point,count=14,color=0xffca7d){for(let i=0;i<count;i++){const p=mesh(new THREE.SphereGeometry(.06+rand()*.08,5,4),new THREE.MeshBasicMaterial({color}),point.x,point.y,point.z);effects.push({mesh:p,ttl:.5+rand()*.4,velocity:new THREE.Vector3((rand()-.5)*8,rand()*7,(rand()-.5)*8)})}}
+
+function clearBomb(){if(activeBomb){scene.remove(activeBomb.marker);activeBomb.marker.traverse(part=>{part.geometry?.dispose();part.material?.dispose()});activeBomb=null}$('#bomb-warning').hidden=true}
+function spawnBomb(time){
+  const x=THREE.MathUtils.clamp(player.position.x+(rand()-.5)*5,-37,37),z=THREE.MathUtils.clamp(player.position.z+(rand()-.5)*5,-45,42);
+  const marker=new THREE.Group();marker.position.set(x,terrainHeight(x,z)+.1,z);scene.add(marker);
+  const disc=mesh(new THREE.CircleGeometry(5,32),new THREE.MeshBasicMaterial({color:0xc9221d,transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide}),0,.02,0,marker);disc.rotation.x=-Math.PI/2;
+  const ring=mesh(new THREE.RingGeometry(4.65,5.1,32),new THREE.MeshBasicMaterial({color:0xff4a30,transparent:true,opacity:.92,depthWrite:false,side:THREE.DoubleSide}),0,.05,0,marker);ring.rotation.x=-Math.PI/2;
+  activeBomb={x,z,marker,disc,ring,detonateAt:time+3500};$('#bomb-warning').hidden=false;showToast('BOM SẮP RƠI — CHẠY KHỎI VÙNG ĐỎ!');audio(740,.3,'sawtooth',.1);
+}
+function updateBomb(time){
+  if(status!=='running'&&status!=='quiz')return;
+  if(!activeBomb){if(status==='running'&&time>=nextBombAt)spawnBomb(time);return}
+  const bomb=activeBomb,remaining=Math.max(0,bomb.detonateAt-time);$('#bomb-countdown').textContent=Math.ceil(remaining/1000);
+  bomb.disc.material.opacity=.22+Math.abs(Math.sin(time*.009))*.2;bomb.ring.scale.setScalar(1+Math.sin(time*.012)*.035);
+  if(remaining>0)return;
+  const distance=Math.hypot(player.position.x-bomb.x,player.position.z-bomb.z),blastPoint=new THREE.Vector3(bomb.x,terrainHeight(bomb.x,bomb.z)+.5,bomb.z);
+  clearBomb();burst(blastPoint,32,0xff873e);audio(75,.55,'sawtooth',.15);
+  if(distance<5.2)takeDamage(34);else showToast('ĐÃ NÉ ĐƯỢC BOM!');
+  nextBombAt=time+17000+rand()*9000;
+}
 
 function updatePlayer(dt){if(status!=='running')return;let forward=0,side=0;if(keys.has('KeyW')||keys.has('ArrowUp'))forward++;if(keys.has('KeyS')||keys.has('ArrowDown'))forward--;if(keys.has('KeyA')||keys.has('ArrowLeft'))side--;if(keys.has('KeyD')||keys.has('ArrowRight'))side++;forward+=-touchMove.y;side+=touchMove.x;
   const length=Math.hypot(forward,side);if(length>.05){forward/=Math.max(1,length);side/=Math.max(1,length);const running=keys.has('ShiftLeft')||keys.has('ShiftRight'),rate=speed*(running?1.48:1);const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side)*rate*dt,dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*rate*dt;player.position.x=THREE.MathUtils.clamp(player.position.x+dx,-38,38);player.position.z=THREE.MathUtils.clamp(player.position.z+dz,-46,43);motion+=dt*(running?13:9);const legs=player.userData.legs;legs[0].rotation.x=Math.sin(motion)*.38;legs[1].rotation.x=-Math.sin(motion)*.38;player.position.y=terrainHeight(player.position.x,player.position.z)+Math.abs(Math.sin(motion))*.07}else{player.userData.legs.forEach(l=>l.rotation.x*=.75);player.position.y=terrainHeight(player.position.x,player.position.z)}
   player.rotation.y=yaw;
 }
-function updateCamera(dt,instant=false){const p=player?.position||new THREE.Vector3(0,0,37),back=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const desired=p.clone().addScaledVector(back,isMobile?7.5:6.8).add(new THREE.Vector3(0,3.4+pitch*5,0));if(instant)camera.position.copy(desired);else camera.position.lerp(desired,Math.min(1,dt*7));const target=p.clone().addScaledVector(back,-8).add(new THREE.Vector3(0,1.8+pitch*4,0));camera.lookAt(target)}
+function updateCamera(dt,instant=false){if(status==='victory'){camera.position.lerp(new THREE.Vector3(13,11,-25),Math.min(1,dt*2));camera.lookAt(0,6,-49);return}const p=player?.position||new THREE.Vector3(0,0,37),back=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const desired=p.clone().addScaledVector(back,isMobile?7.5:6.8).add(new THREE.Vector3(0,3.4+pitch*5,0));if(instant)camera.position.copy(desired);else camera.position.lerp(desired,Math.min(1,dt*7));const target=p.clone().addScaledVector(back,-8).add(new THREE.Vector3(0,1.8+pitch*4,0));camera.lookAt(target)}
 function updateProximity(){if(status!=='running'){hud.prompt.hidden=true;return}let closest=null,best=3.2;for(const c of crates){if(c.opened)continue;const dist=Math.hypot(c.group.position.x-player.position.x,c.group.position.z-player.position.z);if(dist<best){best=dist;closest=c}}nearest=closest;
-  if(opened===5&&Math.hypot(player.position.x,player.position.z+45)<6){hud.prompt.hidden=false;hud.promptText.textContent='CẮM CỜ TRÊN HẦM CHỈ HUY';return}
   hud.prompt.hidden=!closest;if(closest)hud.promptText.textContent=`MỞ THÙNG TIẾP TẾ ${closest.index+1}`;
 }
-function updateEnemies(dt){if(status!=='running'&&status!=='quiz')return;for(const e of enemies){if(!e.alive)continue;const dist=e.body.position.distanceTo(player.position);if(dist>33)continue;const angle=Math.atan2(player.position.x-e.body.position.x,e.body.position.z-player.position.z);e.body.rotation.y=angle;
-  if(dist>10&&status==='running'){const direction=player.position.clone().sub(e.body.position).setY(0).normalize();e.body.position.addScaledVector(direction,dt*.6);e.walk+=dt*5;e.body.userData.legs[0].rotation.x=Math.sin(e.walk)*.24;e.body.userData.legs[1].rotation.x=-Math.sin(e.walk)*.24}
-  e.cooldown-=dt;if(e.cooldown<=0&&dist<18){e.cooldown=4.2+rand()*1.8;const from=e.body.position.clone().add(new THREE.Vector3(0,1.5,0)),to=player.position.clone().add(new THREE.Vector3(0,1.2,0)),direction=to.sub(from).normalize();const bullet=mesh(new THREE.SphereGeometry(.12,6,5),mats.bullet,from.x,from.y,from.z);enemyBullets.push({mesh:bullet,velocity:direction.multiplyScalar(19),ttl:2.1});audio(108,.09,'sawtooth',.025)}
+function updateEnemies(dt,time){if(status!=='running'&&status!=='quiz')return;for(const e of enemies){if(!e.alive)continue;
+  const position=e.body.position,dist=Math.hypot(player.position.x-position.x,player.position.z-position.z),move=new THREE.Vector3();
+  if(dist<9){const sign=e.index%2?1:-1;move.set((position.z-player.position.z)*sign,0,(player.position.x-position.x)*sign).normalize()}
+  else if(dist<18){move.set(player.position.x-position.x,0,player.position.z-position.z).normalize();move.x+=Math.sin(time*.0015+e.phase)*.35;move.normalize()}
+  else{const targetX=e.anchor.x+Math.sin(time*.0007+e.phase)*4,targetZ=e.anchor.z+Math.cos(time*.0006+e.phase)*3;move.set(targetX-position.x,0,targetZ-position.z);if(move.length()>1)move.normalize()}
+  const pace=dist<18?1.15:.9;position.x=THREE.MathUtils.clamp(position.x+move.x*pace*dt,-21,21);position.z=THREE.MathUtils.clamp(position.z+move.z*pace*dt,-43,32);position.y=terrainHeight(position.x,position.z);
+  e.walk+=dt*5.5;e.body.userData.legs[0].rotation.x=Math.sin(e.walk)*.24;e.body.userData.legs[1].rotation.x=-Math.sin(e.walk)*.24;
+  e.body.rotation.y=dist<20?Math.atan2(player.position.x-position.x,position.z-player.position.z):Math.atan2(move.x,-move.z);
+  e.cooldown-=dt;if(e.cooldown<=0&&dist<16){e.cooldown=6+rand()*3;const from=position.clone().add(new THREE.Vector3(0,1.5,0)),to=player.position.clone().add(new THREE.Vector3(0,1.2,0)),direction=to.sub(from).normalize();const bullet=mesh(new THREE.SphereGeometry(.12,6,5),mats.bullet,from.x,from.y,from.z);enemyBullets.push({mesh:bullet,velocity:direction.multiplyScalar(17),ttl:2.2});audio(108,.09,'sawtooth',.025)}
  }}
-function updateBullets(dt){for(let i=enemyBullets.length-1;i>=0;i--){const b=enemyBullets[i];b.mesh.position.addScaledVector(b.velocity,dt);b.ttl-=dt;if(b.mesh.position.distanceTo(player.position.clone().add(new THREE.Vector3(0,1.3,0)))<.85){takeDamage(status==='quiz'?5:6);b.ttl=0}if(b.ttl<=0){scene.remove(b.mesh);enemyBullets.splice(i,1)}}}
-function updateEffects(dt,time){for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.ttl-=dt;if(e.velocity){e.mesh.position.addScaledVector(e.velocity,dt);e.velocity.y-=dt*13;e.mesh.scale.multiplyScalar(.97)}if(e.ttl<=0){scene.remove(e.mesh);effects.splice(i,1)}}for(const c of crates){if(c.opened)continue;c.marker.position.y=2.1+Math.sin(time*.002+c.index)*.17;c.marker.rotation.y+=dt*1.6;c.ring.rotation.z+=dt*.35}
+function updateBullets(dt){for(let i=enemyBullets.length-1;i>=0;i--){const b=enemyBullets[i];b.mesh.position.addScaledVector(b.velocity,dt);b.ttl-=dt;if(b.mesh.position.distanceTo(player.position.clone().add(new THREE.Vector3(0,1.3,0)))<.85){takeDamage(status==='quiz'?5:6);b.ttl=0}if(b.ttl<=0){scene.remove(b.mesh);b.mesh.geometry.dispose();enemyBullets.splice(i,1)}}}
+function updateEffects(dt,time){for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.ttl-=dt;if(e.velocity){e.mesh.position.addScaledVector(e.velocity,dt);e.velocity.y-=dt*13;e.mesh.scale.multiplyScalar(.97)}if(e.ttl<=0){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}for(const c of crates){if(c.opened)continue;c.marker.position.y=2.1+Math.sin(time*.002+c.index)*.17;c.marker.rotation.y+=dt*1.6;c.ring.rotation.z+=dt*.35}
   if(flagGroup?.visible&&flagMesh){const pos=flagMesh.geometry.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i);pos.setZ(i,Math.sin(time*.004+x*1.3)*.22*(x/4))}pos.needsUpdate=true;flagMesh.geometry.computeVertexNormals()}}
 function drawMap(){const canvas=$('#minimap'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#536248';ctx.fillRect(0,0,w,h);ctx.fillStyle='#8f815d';ctx.fillRect(69,0,22,h);ctx.strokeStyle='#d6c79e88';ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(80,0);ctx.lineTo(80,h);ctx.stroke();ctx.setLineDash([]);const project=(x,z)=>({x:w/2+x/90*w,y:(50-z)/100*h});
   const bunkerPoint=project(0,-49);ctx.fillStyle='#d6b775';ctx.fillRect(bunkerPoint.x-6,bunkerPoint.y-4,12,8);
   for(const c of crates){if(c.opened)continue;const p=project(c.group.position.x,c.group.position.z);ctx.fillStyle='#69d9df';ctx.fillRect(p.x-3,p.y-3,6,6)}
   for(const e of enemies){if(!e.alive)continue;const p=project(e.body.position.x,e.body.position.z);ctx.fillStyle='#f0785a';ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill()}
+  if(activeBomb){const b=project(activeBomb.x,activeBomb.z);ctx.strokeStyle='#ff4538';ctx.lineWidth=2;ctx.beginPath();ctx.arc(b.x,b.y,9,0,Math.PI*2);ctx.stroke()}
   const p=project(player.position.x,player.position.z);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(yaw);ctx.fillStyle='#ffdf7c';ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(-4,5);ctx.lineTo(4,5);ctx.closePath();ctx.fill();ctx.restore()}
 function tick(time){if(!renderer||document.hidden)return;const dt=Math.min(.045,lastTime?(time-lastTime)/1000:.016);lastTime=time;
-  if(status==='running')updatePlayer(dt);updateCamera(dt);updateEnemies(dt);updateBullets(dt);updateEffects(dt,time);
+  if(status==='running')updatePlayer(dt);updateCamera(dt);updateEnemies(dt,time);updateBullets(dt);updateBomb(time);updateEffects(dt,time);
   if(status==='quiz'){const remaining=Math.max(0,Math.ceil((quizDeadline-performance.now())/1000));hud.quizTimer.textContent=`${remaining}s`;if(remaining<=0)die('Hết thời gian giải mã tiếp tế. Hỏa lực đối phương đã áp sát.')}
   if(time-hudTime>100){updateProximity();hudTime=time}if(time-miniTime>180){drawMap();miniTime=time}
   renderer.render(scene,camera);
@@ -284,7 +305,7 @@ function bindControls(){document.querySelectorAll('[data-role]').forEach(button=
       audio(660,.15,'triangle');
     }else backgroundMusic.pause();
   });
-  addEventListener('keydown',event=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();keys.add(event.code);if(event.repeat)return;if(status==='quiz'&&['Digit1','Digit2','Digit3','Digit4'].includes(event.code)){answer(Number(event.code.slice(-1))-1);return}if(event.code==='KeyE')interact();if(event.code==='KeyR')reload();if(event.code==='KeyQ')throwGrenade();if(event.code==='Space')fire()});addEventListener('keyup',event=>keys.delete(event.code));
+  addEventListener('keydown',event=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();keys.add(event.code);if(event.repeat)return;if(status==='quiz'&&['Digit1','Digit2','Digit3','Digit4'].includes(event.code)){answer(Number(event.code.slice(-1))-1);return}if(event.code==='KeyE')interact();if(event.code==='KeyR')reload();if(event.code==='Space')fire()});addEventListener('keyup',event=>keys.delete(event.code));
   worldEl.addEventListener('click',()=>{if(status!=='running')return;if(document.pointerLockElement===renderer.domElement)fire();else renderer.domElement.requestPointerLock?.()});
   document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement||status!=='running')return;yaw-=event.movementX*.0026;pitch=THREE.MathUtils.clamp(pitch-event.movementY*.0018,-.2,.46)});
   const joy=$('#joystick'),knob=$('#joystick-knob');let joyPointer=null;joy.addEventListener('pointerdown',event=>{joyPointer=event.pointerId;joy.setPointerCapture(event.pointerId)});joy.addEventListener('pointermove',event=>{if(event.pointerId!==joyPointer)return;const r=joy.getBoundingClientRect(),x=event.clientX-(r.left+r.width/2),y=event.clientY-(r.top+r.height/2),mag=Math.max(1,Math.hypot(x,y)),max=26;touchMove={x:Math.max(-1,Math.min(1,x/max)),y:Math.max(-1,Math.min(1,y/max))};knob.style.transform=`translate(${x/mag*Math.min(mag,max)}px,${y/mag*Math.min(mag,max)}px)`});const endJoy=()=>{joyPointer=null;touchMove={x:0,y:0};knob.style.transform=''};joy.addEventListener('pointerup',endJoy);joy.addEventListener('pointercancel',endJoy);
