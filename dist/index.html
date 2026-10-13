@@ -8,11 +8,13 @@
   <title>Điện Biên Phủ 3D — VNR202</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://vnr202.vercel.app">
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="game3d.css">
-  <script type="module" src="game3d.js"></script>
+  <link rel="stylesheet" href="game3d.css?v=music-1">
+  <script type="module" src="game3d.js?v=music-1"></script>
 </head>
 <body>
+  <audio id="background-music" src="https://vnr202.vercel.app/Victory%20at%20Dien%20Bien%20Phu.mp3" preload="none" loop></audio>
   <div id="game-root">
     <div id="world" aria-label="Thế giới 3D chiến dịch Điện Biên Phủ"></div>
     <div class="screen-grain" aria-hidden="true"></div>
@@ -21,7 +23,7 @@
     <header class="topbar">
       <div class="brand"><span class="brand-star">★</span><span>VNR<span>202</span><small>ĐIỆN BIÊN PHỦ / 3D</small></span></div>
       <div class="mission-pill"><i></i><span id="mission-state">CHIẾN DỊCH 1954</span></div>
-      <div class="top-actions"><button id="sound-btn" type="button" aria-pressed="false" title="Bật hoặc tắt âm thanh">♪ <span>ÂM THANH</span></button><a href="learn.html" id="learn-link">GIÁO TRÌNH <span aria-hidden="true">↗</span></a></div>
+      <div class="top-actions"><button id="sound-btn" type="button" aria-pressed="false" title="Bật hoặc tắt nhạc nền và hiệu ứng">♪ <span>BẬT NHẠC</span></button><a href="learn.html" id="learn-link">GIÁO TRÌNH <span aria-hidden="true">↗</span></a></div>
     </header>
 
     <aside class="objective-card" aria-live="polite"><span class="micro-label">NHIỆM VỤ HIỆN TẠI</span><strong id="objective-text">Chọn vai để bắt đầu chiến dịch</strong><div class="objective-track"><span id="objective-fill"></span></div><small id="objective-sub">0 / 5 THÙNG TIẾP TẾ</small></aside>

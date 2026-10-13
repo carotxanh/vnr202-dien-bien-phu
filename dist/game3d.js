@@ -2,6 +2,8 @@ import * as THREE from './vendor/three/three.module.js';
 
 const $ = (selector) => document.querySelector(selector);
 const worldEl = $('#world');
+const backgroundMusic = $('#background-music');
+backgroundMusic.volume = .25;
 const hud = {
   hp: $('#hp-text'), health: $('#health-fill'), armor: $('#armor-fill'), ammo: $('#ammo-text'), reserve: $('#reserve-text'),
   weapon: $('#weapon-name'), inventory: $('#inventory-icons'), objective: $('#objective-text'), objectiveFill: $('#objective-fill'),
@@ -273,7 +275,15 @@ function tick(time){if(!renderer||document.hidden)return;const dt=Math.min(.045,
 
 function bindControls(){document.querySelectorAll('[data-role]').forEach(button=>button.addEventListener('click',()=>setRole(button.dataset.role)));$('#start-btn').addEventListener('click',startGame);
   hud.quizOptions.addEventListener('click',event=>{const answerButton=event.target.closest('[data-answer]');if(answerButton)answer(Number(answerButton.dataset.answer))});
-  $('#sound-btn').addEventListener('click',event=>{soundEnabled=!soundEnabled;event.currentTarget.setAttribute('aria-pressed',String(soundEnabled));event.currentTarget.innerHTML=soundEnabled?'♫ <span>ÂM THANH BẬT</span>':'♪ <span>ÂM THANH</span>';if(soundEnabled)audio(660,.15,'triangle')});
+  $('#sound-btn').addEventListener('click',event=>{
+    soundEnabled=!soundEnabled;
+    event.currentTarget.setAttribute('aria-pressed',String(soundEnabled));
+    event.currentTarget.innerHTML=soundEnabled?'♫ <span>TẮT NHẠC</span>':'♪ <span>BẬT NHẠC</span>';
+    if(soundEnabled){
+      backgroundMusic.play().catch(()=>showToast('Không thể tải nhạc nền từ website tham chiếu.'));
+      audio(660,.15,'triangle');
+    }else backgroundMusic.pause();
+  });
   addEventListener('keydown',event=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();keys.add(event.code);if(event.repeat)return;if(status==='quiz'&&['Digit1','Digit2','Digit3','Digit4'].includes(event.code)){answer(Number(event.code.slice(-1))-1);return}if(event.code==='KeyE')interact();if(event.code==='KeyR')reload();if(event.code==='KeyQ')throwGrenade();if(event.code==='Space')fire()});addEventListener('keyup',event=>keys.delete(event.code));
   worldEl.addEventListener('click',()=>{if(status!=='running')return;if(document.pointerLockElement===renderer.domElement)fire();else renderer.domElement.requestPointerLock?.()});
   document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement||status!=='running')return;yaw-=event.movementX*.0026;pitch=THREE.MathUtils.clamp(pitch-event.movementY*.0018,-.2,.46)});
