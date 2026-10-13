@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a16">
+  <meta name="description" content="Học VNR202 qua hành trình lịch sử Việt Nam, ôn tập từng giai đoạn và chơi quiz dựa trên giáo trình 29 buổi học.">
+  <title>VNR202 — Hành trình lịch sử</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="VNR202, về đầu trang"><span class="brand-mark">V<span>★</span></span><span>VNR<span class="gold">202</span><small>HÀNH TRÌNH LỊCH SỬ</small></span></a>
+    <nav aria-label="Điều hướng chính"><a href="#hanh-trinh">Hành trình</a><a href="#chien-dich">Trò chơi</a><a href="#tai-lieu">Giáo trình</a></nav>
+    <a class="header-cta" href="#chien-dich">Bắt đầu khám phá <span aria-hidden="true">↗</span></a>
+    <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false" aria-controls="mobile-nav">☰</button>
+  </header>
+  <nav id="mobile-nav" class="mobile-nav" aria-label="Điều hướng trên điện thoại" hidden><a href="#hanh-trinh">Hành trình</a><a href="#chien-dich">Trò chơi</a><a href="#tai-lieu">Giáo trình</a></nav>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-image" role="img" aria-label="Minh họa hành trình lịch sử Việt Nam qua núi rừng và phố Hà Nội"></div>
+      <div class="hero-shade"></div>
+      <div class="hero-content shell">
+        <p class="eyebrow"><span class="eyebrow-line"></span> KHÔNG GIAN HỌC TẬP VNR202 <span class="eyebrow-line"></span></p>
+        <h1 id="hero-title">LỊCH SỬ<br><em>KHÔNG CHỈ ĐỂ NHỚ.</em><br><span>ĐỂ KHÁM PHÁ.</span></h1>
+        <p class="hero-lead">Đi qua những bước ngoặt của lịch sử Đảng Cộng sản Việt Nam. Học bằng câu chuyện, ghi nhớ bằng thử thách.</p>
+        <div class="hero-actions"><a class="button button-gold" href="#hanh-trinh">Khám phá các giai đoạn <span aria-hidden="true">↗</span></a><a class="button button-ghost" href="#chien-dich">Vào phòng trò chơi <span aria-hidden="true">→</span></a></div>
+        <div class="hero-stats" aria-label="Thông tin môn học"><div><strong>29</strong><span>BUỔI HỌC</span></div><i></i><div><strong>05</strong><span>CHẶNG LỊCH SỬ</span></div><i></i><div><strong>04</strong><span>KIỂU THỬ THÁCH</span></div></div>
+      </div>
+      <div class="scroll-cue">CUỘN ĐỂ KHÁM PHÁ <span aria-hidden="true">↓</span></div>
+    </section>
+
+    <section class="intro section-pad shell" aria-labelledby="intro-title">
+      <div class="section-index">01 / TỔNG QUAN MÔN HỌC</div>
+      <div class="intro-grid"><div><p class="kicker">TỪ GIÁO TRÌNH ĐẾN HÀNH TRÌNH</p><h2 id="intro-title">MỖI MỐC THỜI GIAN,<br><span>MỘT BƯỚC NGOẶT.</span></h2></div><div class="intro-copy"><p>VNR202 đưa người học qua quá trình ra đời và lãnh đạo cách mạng của Đảng, hai cuộc kháng chiến, xây dựng đất nước sau thống nhất và công cuộc Đổi mới.</p><p>Chọn một giai đoạn để đọc ý chính, rồi thử sức với câu hỏi, ghép mốc sự kiện và sắp xếp niên biểu. Mỗi đáp án đều có giải thích và buổi học để đối chiếu.</p></div></div>
+    </section>
+
+    <section class="journey section-pad" id="hanh-trinh" aria-labelledby="journey-title"><div class="shell">
+      <div class="section-index">02 / BẢN ĐỒ HÀNH TRÌNH</div>
+      <div class="section-head"><div><p class="kicker">05 CHẶNG — MỘT DÒNG LỊCH SỬ</p><h2 id="journey-title">CHỌN GIAI ĐOẠN <span>ĐỂ BẮT ĐẦU</span></h2></div><p>Khám phá nội dung cốt lõi theo trục thời gian của giáo trình.</p></div>
+      <div class="era-grid" id="era-grid"></div>
+      <article class="era-detail" id="era-detail" aria-live="polite"></article>
+    </div></section>
+
+    <section class="battle-feature" id="dien-bien" aria-labelledby="battle-feature-title"><div class="battle-feature-art" role="img" aria-label="Chiến trường Điện Biên Phủ minh họa"></div><div class="shell battle-feature-inner"><div class="battle-feature-content"><span class="battle-feature-kicker">CHẾ ĐỘ NHẬP VAI MỚI / 1954</span><h2 id="battle-feature-title">CHIẾN TRƯỜNG<br><span>ĐIỆN BIÊN PHỦ</span></h2><p>Chọn vai, băng qua chiến hào và vượt 5 chốt kiến thức. Mỗi quyết định đưa bạn tiến gần hơn đến lá cờ chiến thắng.</p><a class="button button-gold" href="index.html">BƯỚC VÀO CHIẾN DỊCH <span aria-hidden="true">↗</span></a><small>Trò chơi ôn tập dựa trên buổi 13–14 của giáo trình.</small></div></div></section>
+
+    <section class="quote-band" aria-label="Thông điệp học tập"><div class="shell"><span class="star" aria-hidden="true">★</span><p>“HIỂU BỐI CẢNH. NHỚ SỰ KIỆN.<br><strong>KẾT NỐI NHỮNG CHẶNG ĐƯỜNG.</strong>”</p><span class="quote-foot">VNR202 / LỊCH SỬ ĐẢNG CỘNG SẢN VIỆT NAM</span></div></section>
+
+    <section class="games section-pad shell" id="chien-dich" aria-labelledby="game-title"><div class="section-index">03 / PHÒNG THỬ THÁCH</div><div class="section-head"><div><p class="kicker">HỌC QUA TRẢI NGHIỆM</p><h2 id="game-title">BẠN SẴN SÀNG <span>NHẬN NHIỆM VỤ?</span></h2></div><p>Bốn cách chơi, cùng một mục tiêu: nhớ chắc kiến thức và hiểu vì sao mốc lịch sử quan trọng.</p></div>
+      <div class="game-grid">
+        <article class="game-card"><div class="game-icon" aria-hidden="true">✦</div><div class="game-no">NHIỆM VỤ 01</div><h3>GIẢI MÃ SỰ KIỆN</h3><p>Trả lời câu hỏi theo từng giai đoạn. Xem giải thích sau mỗi lượt để củng cố kiến thức.</p><div class="game-meta"><span>20 CÂU HỎI</span><span>5 CHẶNG</span></div><button class="game-start" data-game="quiz">Bắt đầu thử thách <span aria-hidden="true">↗</span></button></article>
+        <article class="game-card"><div class="game-icon" aria-hidden="true">⌛</div><div class="game-no">NHIỆM VỤ 02</div><h3>TRỤC THỜI GIAN</h3><p>Sắp xếp các sự kiện theo đúng trình tự để tái dựng dòng chảy lịch sử.</p><div class="game-meta"><span>5 SỰ KIỆN</span><span>THAO TÁC DỄ DÀNG</span></div><button class="game-start" data-game="timeline">Xếp lại lịch sử <span aria-hidden="true">↗</span></button></article>
+        <article class="game-card"><div class="game-icon" aria-hidden="true">◈</div><div class="game-no">NHIỆM VỤ 03</div><h3>HỒ SƠ MẬT</h3><p>Ghép sự kiện với năm tương ứng. Mở đúng từng cặp để hoàn thành hồ sơ.</p><div class="game-meta"><span>6 CẶP THẺ</span><span>LUYỆN TRÍ NHỚ</span></div><button class="game-start" data-game="match">Mở hồ sơ <span aria-hidden="true">↗</span></button></article>
+      </div>
+      <div class="progress-bar"><div><span class="progress-symbol">★</span><div><strong>NHẬT KÝ HÀNH TRÌNH</strong><small id="progress-text">Chưa có nhiệm vụ hoàn thành</small></div></div><button id="reset-progress" type="button">Xóa tiến độ</button></div>
+    </section>
+
+    <section class="sources section-pad" id="tai-lieu" aria-labelledby="sources-title"><div class="shell sources-grid"><div><div class="section-index">04 / NGUỒN TÀI LIỆU</div><p class="kicker">HỌC CÓ CĂN CỨ</p><h2 id="sources-title">BÁM SÁT <span>GIÁO TRÌNH.</span></h2><p>Nội dung và đáp án được biên soạn từ bộ bài giảng VNR202 cập nhật SP24 gồm 29 session do bạn cung cấp. Số buổi học được ghi ở từng chặng và sau câu trả lời để bạn mở lại slide gốc đối chiếu.</p></div><div class="source-card"><span>VNR202 / UPDATED SP24</span><strong>29 BUỔI HỌC</strong><div class="source-row"><b>01—02</b><span>Nhập môn và phương pháp học tập</span></div><div class="source-row"><b>03—10</b><span>Ra đời của Đảng và cách mạng 1930–1945</span></div><div class="source-row"><b>11—18</b><span>Kháng chiến và thống nhất 1945–1975</span></div><div class="source-row"><b>19—29</b><span>Xây dựng đất nước và Đổi mới</span></div><small>Lưu ý: Trò chơi là bản ôn tập, không thay thế toàn bộ nội dung bài giảng.</small></div></div></section>
+  </main>
+  <footer><div class="shell footer-inner"><div class="brand"><span class="brand-mark">V<span>★</span></span><span>VNR<span class="gold">202</span><small>HÀNH TRÌNH LỊCH SỬ</small></span></div><p>Học lịch sử bằng sự tò mò.<br>Ghi nhớ bằng trải nghiệm.</p><a href="#top">VỀ ĐẦU TRANG ↑</a></div></footer>
+
+  <dialog id="game-dialog" aria-labelledby="dialog-title"><div class="dialog-shell"><div class="dialog-top"><span>VNR202 / PHÒNG THỬ THÁCH</span><button id="close-dialog" type="button" aria-label="Đóng trò chơi">✕</button></div><div id="game-content"></div></div></dialog>
+</body>
+</html>
+
