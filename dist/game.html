@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://vnr202.vercel.app">
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="game3d.css?v=battle-audio-1">
-  <script type="module" src="game3d.js?v=autoplay-1"></script>
+  <link rel="stylesheet" href="game3d.css?v=quiz-exit-1">
+  <script type="module" src="game3d.js?v=quiz-exit-1"></script>
 </head>
 <body>
   <audio id="background-music" src="https://vnr202.vercel.app/Victory%20at%20Dien%20Bien%20Phu.mp3" preload="auto" autoplay loop></audio>
@@ -42,7 +42,7 @@
 
     <section class="overlay intro-overlay" id="intro-overlay" aria-labelledby="intro-title"><div class="intro-card"><div class="intro-kicker"><span>VNR202 / CHIẾN DỊCH 1954</span><span>TRẢI NGHIỆM 3D</span></div><h1 id="intro-title">ĐIỆN BIÊN PHỦ<br><em>VÀO TRẬN ĐỊA.</em></h1><p>Xuất phát với 5 viên đạn. Mỗi hòm tiếp tế trả lời đúng chỉ nhận thêm 3 viên, không hồi máu. Địch bắn nhanh; redzone rải 4 quả bom trên toàn bản đồ mỗi vài giây, cảnh báo ngắn và hất văng nhân vật nếu trúng vùng nổ.</p><div class="role-heading">CHỌN VAI NHẬP TRẬN</div><div class="role-list" id="role-list"><button type="button" class="role-card" data-role="soldier"><b>01</b><strong>CHIẾN SĨ</strong><small>Cân bằng • 100 thể lực</small></button><button type="button" class="role-card" data-role="porter"><b>02</b><strong>DÂN CÔNG</strong><small>Bền bỉ • 120 thể lực</small></button><button type="button" class="role-card" data-role="scout"><b>03</b><strong>TRINH SÁT</strong><small>Nhanh nhẹn • 90 thể lực</small></button></div><button class="primary" id="start-btn" type="button" disabled>BẮT ĐẦU CHIẾN DỊCH <span aria-hidden="true">↗</span></button><div class="intro-foot">THƯ VIỆN 3D: THREE.JS (MIT) <span>•</span> KIẾN THỨC: GIÁO TRÌNH VNR202, BUỔI 13–14</div></div></section>
 
-    <section class="quiz-panel" id="quiz-panel" hidden aria-labelledby="quiz-title"><div class="quiz-top"><span>THÙNG TIẾP TẾ / HỒ SƠ KIẾN THỨC</span><span id="quiz-timer">20s</span></div><h2 id="quiz-title">Giải mã tiếp tế</h2><p id="quiz-question"></p><div id="quiz-options" class="quiz-options"></div><div class="quiz-warning"><i></i> Chiến trường không tạm dừng. Đối phương vẫn có thể tấn công.</div></section>
+    <section class="quiz-panel" id="quiz-panel" hidden aria-labelledby="quiz-title"><div class="quiz-top"><span>THÙNG TIẾP TẾ / HỒ SƠ KIẾN THỨC</span><div class="quiz-actions"><span id="quiz-timer">26s</span><button id="quiz-exit" type="button" aria-label="Thoát câu hỏi để né bom">THOÁT ↗</button></div></div><h2 id="quiz-title">Giải mã tiếp tế</h2><p id="quiz-question"></p><div id="quiz-options" class="quiz-options"></div><p id="quiz-feedback" class="quiz-feedback" role="status" aria-live="polite"></p><div class="quiz-warning"><i></i> Bấm THOÁT hoặc Esc để né bom, rồi mở lại hòm để trả lời tiếp. Đối phương vẫn có thể tấn công.</div></section>
 
     <section class="overlay outcome-overlay" id="outcome-overlay" hidden aria-live="assertive"><div class="outcome-card" id="outcome-card"></div></section>
     <div id="webgl-error" class="webgl-error" hidden>Thiết bị hoặc trình duyệt này chưa bật WebGL 2. Hãy thử Chrome/Edge mới hơn hoặc bật tăng tốc phần cứng.</div>

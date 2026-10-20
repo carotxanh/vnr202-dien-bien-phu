@@ -9,7 +9,7 @@ const hud = {
   weapon: $('#weapon-name'), inventory: $('#inventory-icons'), objective: $('#objective-text'), objectiveFill: $('#objective-fill'),
   objectiveSub: $('#objective-sub'), prompt: $('#interaction-prompt'), promptText: $('#interaction-text'),
   mission: $('#mission-state'), toast: $('#toast'), quiz: $('#quiz-panel'), quizTimer: $('#quiz-timer'),
-  quizQuestion: $('#quiz-question'), quizOptions: $('#quiz-options'), intro: $('#intro-overlay'),
+  quizQuestion: $('#quiz-question'), quizOptions: $('#quiz-options'), quizFeedback: $('#quiz-feedback'), intro: $('#intro-overlay'),
   outcome: $('#outcome-overlay'), outcomeCard: $('#outcome-card'), damage: $('#damage-flash')
 };
 const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 800;
@@ -162,7 +162,7 @@ function makeCrates() {
     const beam=mesh(new THREE.CylinderGeometry(.22,.95,8,12,1,true),new THREE.MeshBasicMaterial({color:0x64d9d9,transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide}),0,5,0,group);
     const ring=mesh(new THREE.TorusGeometry(1,.045,5,18),mats.loot,0,1.45,0,group);ring.rotation.x=Math.PI/2;
     const marker=mesh(new THREE.OctahedronGeometry(.38),mats.loot,0,2.1,0,group);
-    crates.push({index,group,ring,marker,beam,opened:false});
+    crates.push({index,group,ring,marker,beam,opened:false,quizRemainingMs:26000,wrongAnswers:new Set()});
   });
 }
 function makeEnemies() {
@@ -239,17 +239,33 @@ function battleSound(kind){
 function interact() {
   if(status!=='running')return;
   if(!nearest||nearest.opened)return;
-  activeQuestion=nearest.index;status='quiz';quizDeadline=performance.now()+26000;
+  const crate=nearest;
+  activeQuestion=crate.index;status='quiz';quizDeadline=performance.now()+crate.quizRemainingMs;
   if(document.pointerLockElement)document.exitPointerLock();
   const q=questionBank[activeQuestion];hud.quizQuestion.textContent=q.q;
-  hud.quizOptions.innerHTML=q.options.map((text,i)=>`<button type="button" data-answer="${i}"><b>${'ABCD'[i]}.</b> ${text}</button>`).join('');
+  hud.quizOptions.innerHTML=q.options.map((text,i)=>`<button type="button" data-answer="${i}" ${crate.wrongAnswers.has(i)?'class="wrong" disabled':''}><b>${'ABCD'[i]}.</b> ${text}</button>`).join('');
+  hud.quizFeedback.textContent=crate.wrongAnswers.size?'Đáp án đã chọn sai được đánh dấu. Hãy thử phương án khác.':'';
+  hud.quizTimer.textContent=`${Math.ceil(crate.quizRemainingMs/1000)}s`;
   hud.quiz.hidden=false;hud.prompt.hidden=true;updateHud();showToast('Nhanh lên! Đối phương vẫn bắn trong lúc bạn trả lời.');audio(580,.15,'triangle');
+}
+function closeQuiz(timedOut=false) {
+  if(status!=='quiz')return;
+  const crate=crates[activeQuestion];
+  crate.quizRemainingMs=timedOut?26000:Math.max(1000,quizDeadline-performance.now());
+  status='running';activeQuestion=-1;hud.quiz.hidden=true;updateProximity();updateHud();
+  showToast(timedOut?'HẾT GIỜ — HÒM VẪN Ở ĐÓ, HÃY NÉ ĐỊCH RỒI MỞ LẠI.':'ĐÃ RỜI HÒM — NÉ BOM VÀ QUAY LẠI ĐỌC TIẾP.');
 }
 function answer(index) {
   if(status!=='quiz')return;
-  const q=questionBank[activeQuestion];hud.quiz.hidden=true;
-  if(index!==q.answer){die('Trả lời chưa đúng. '+q.source);return}
-  const crate=crates[activeQuestion];crate.opened=true;scene.remove(crate.group);opened++;
+  const q=questionBank[activeQuestion],crate=crates[activeQuestion];
+  if(index!==q.answer){
+    if(crate.wrongAnswers.has(index))return;
+    crate.wrongAnswers.add(index);
+    const choice=hud.quizOptions.querySelector(`[data-answer="${index}"]`);choice.disabled=true;choice.classList.add('wrong');
+    hud.quizFeedback.textContent='Chưa đúng. Bạn vẫn có thể thử đáp án khác hoặc thoát để né bom.';
+    audio(220,.16,'square');return;
+  }
+  hud.quiz.hidden=true;crate.opened=true;scene.remove(crate.group);opened++;
   const loaded=Math.min(3,12-ammo);ammo+=loaded;reserve=Math.min(36,reserve+3-loaded);
   status='running';activeQuestion=-1;nearest=null;updateObjective();updateHud();
   showToast(`CHÍNH XÁC! +3 ĐẠN • ${q.source}`);audio(760,.22,'triangle');
@@ -370,15 +386,16 @@ function drawMap(){const canvas=$('#minimap'),ctx=canvas.getContext('2d'),w=canv
 function tick(time){if(!renderer||document.hidden)return;const dt=Math.min(.045,lastTime?(time-lastTime)/1000:.016);lastTime=time;
   if(status==='running')updatePlayer(dt);updateEnemies(dt,time);updateBullets(dt);updateBomb(time);updateKnockback(dt);updateCamera(dt);updateEffects(dt,time);
   if(soundEnabled&&(status==='running'||status==='quiz')&&time>=nextBattleSoundAt){battleSound('distant');nextBattleSoundAt=time+5000+rand()*7000}
-  if(status==='quiz'){const remaining=Math.max(0,Math.ceil((quizDeadline-performance.now())/1000));hud.quizTimer.textContent=`${remaining}s`;if(remaining<=0)die('Hết thời gian giải mã tiếp tế. Hỏa lực đối phương đã áp sát.')}
+  if(status==='quiz'){const remaining=Math.max(0,Math.ceil((quizDeadline-performance.now())/1000));hud.quizTimer.textContent=`${remaining}s`;if(remaining<=0)closeQuiz(true)}
   if(time-hudTime>100){updateProximity();hudTime=time}if(time-miniTime>180){drawMap();miniTime=time}
   renderer.render(scene,camera);
 }
 
 function bindControls(){document.querySelectorAll('[data-role]').forEach(button=>button.addEventListener('click',()=>setRole(button.dataset.role)));$('#start-btn').addEventListener('click',startGame);
   hud.quizOptions.addEventListener('click',event=>{const answerButton=event.target.closest('[data-answer]');if(answerButton)answer(Number(answerButton.dataset.answer))});
+  $('#quiz-exit').addEventListener('click',()=>closeQuiz());
   $('#sound-btn').addEventListener('click',()=>setBattleSound(!soundEnabled));
-  addEventListener('keydown',event=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();keys.add(event.code);if(event.repeat)return;if(status==='quiz'&&['Digit1','Digit2','Digit3','Digit4'].includes(event.code)){answer(Number(event.code.slice(-1))-1);return}if(event.code==='KeyE')interact();if(event.code==='KeyR')reload();if(event.code==='Space')fire()});addEventListener('keyup',event=>keys.delete(event.code));
+  addEventListener('keydown',event=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();keys.add(event.code);if(event.repeat)return;if(status==='quiz'&&event.code==='Escape'){closeQuiz();return}if(status==='quiz'&&['Digit1','Digit2','Digit3','Digit4'].includes(event.code)){answer(Number(event.code.slice(-1))-1);return}if(event.code==='KeyE')interact();if(event.code==='KeyR')reload();if(event.code==='Space')fire()});addEventListener('keyup',event=>keys.delete(event.code));
   worldEl.addEventListener('click',()=>{if(status!=='running')return;if(document.pointerLockElement===renderer.domElement)fire();else renderer.domElement.requestPointerLock?.()});
   document.addEventListener('mousemove',event=>{if(document.pointerLockElement!==renderer.domElement||status!=='running')return;yaw-=event.movementX*.0026;pitch=THREE.MathUtils.clamp(pitch-event.movementY*.0018,-.2,.46)});
   const joy=$('#joystick'),knob=$('#joystick-knob');let joyPointer=null;joy.addEventListener('pointerdown',event=>{joyPointer=event.pointerId;joy.setPointerCapture(event.pointerId)});joy.addEventListener('pointermove',event=>{if(event.pointerId!==joyPointer)return;const r=joy.getBoundingClientRect(),x=event.clientX-(r.left+r.width/2),y=event.clientY-(r.top+r.height/2),mag=Math.max(1,Math.hypot(x,y)),max=26;touchMove={x:Math.max(-1,Math.min(1,x/max)),y:Math.max(-1,Math.min(1,y/max))};knob.style.transform=`translate(${x/mag*Math.min(mag,max)}px,${y/mag*Math.min(mag,max)}px)`});const endJoy=()=>{joyPointer=null;touchMove={x:0,y:0};knob.style.transform=''};joy.addEventListener('pointerup',endJoy);joy.addEventListener('pointercancel',endJoy);
